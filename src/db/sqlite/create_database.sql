@@ -13,9 +13,9 @@
 -- ***** END LICENSE BLOCK *****
 -- 
 
-PRAGMA ${DATABASE_NAME}.default_cache_size = 500;
-PRAGMA ${DATABASE_NAME}.encoding = "UTF-8";
 PRAGMA ${DATABASE_NAME}.legacy_file_format = OFF;
+PRAGMA ${DATABASE_NAME}.encoding = "UTF-8";
+PRAGMA ${DATABASE_NAME}.foreign_keys = ON;
 
 -- -----------------------------------------------------------------------
 -- mailbox statistics
