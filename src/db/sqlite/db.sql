@@ -135,12 +135,6 @@ CREATE TABLE mobile_devices (
    remote_wipe_req     INTEGER UNSIGNED,
    remote_wipe_ack     INTEGER UNSIGNED,
    policy_values       VARCHAR(512),
-   model               VARCHAR(64),
-   imei                VARCHAR(64),
-   friendly_name       VARCHAR(512),
-   os                  VARCHAR(64),
-   os_language         VARCHAR(64),
-   phone_number        VARCHAR(64),
 
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE
