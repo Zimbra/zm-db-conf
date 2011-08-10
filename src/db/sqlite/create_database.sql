@@ -1,17 +1,17 @@
---
+-- 
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
 -- Copyright (C) 2008, 2009, 2010 Zimbra, Inc.
---
+-- 
 -- The contents of this file are subject to the Zimbra Public License
 -- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
---
+-- 
 -- Software distributed under the License is distributed on an "AS IS"
 -- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
---
+-- 
 
 PRAGMA ${DATABASE_NAME}.default_cache_size = 500;
 PRAGMA ${DATABASE_NAME}.encoding = "UTF-8";
@@ -57,6 +57,7 @@ CREATE TABLE ${DATABASE_NAME}.out_of_office (
 
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_out_of_office_sent_on ON out_of_office(sent_on);
 
+
 -- -----------------------------------------------------------------------
 -- items in mailboxes
 -- -----------------------------------------------------------------------
@@ -76,7 +77,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    flags         INTEGER NOT NULL DEFAULT 0,
    tags          BIGINT NOT NULL DEFAULT 0,
    sender        VARCHAR(128),
-   recipients    VARCHAR(128),
    subject       TEXT,
    name          VARCHAR(128),               -- namespace entry for item (e.g. tag name, folder name, document/wiki filename)
    metadata      MEDIUMTEXT,
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
 
    -- CONSTRAINT fk_mail_item_volume_id FOREIGN KEY (volume_id) REFERENCES zimbra.volume(id),
    CONSTRAINT fk_mail_item_parent_id FOREIGN KEY (parent_id) REFERENCES mail_item(id) ON UPDATE CASCADE,
-   CONSTRAINT fk_mail_item_folder_id FOREIGN KEY (folder_id) REFERENCES mail_item(id) ON UPDATE CASCADE,
+   CONSTRAINT fk_mail_item_folder_id FOREIGN KEY (folder_id) REFERENCES mail_item(id) ON UPDATE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_type ON mail_item(type);                      -- for looking up folders and tags
