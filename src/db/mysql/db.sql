@@ -1,17 +1,17 @@
---
+-- 
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
 -- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Zimbra, Inc.
---
+-- 
 -- The contents of this file are subject to the Zimbra Public License
 -- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
---
+-- 
 -- Software distributed under the License is distributed on an "AS IS"
 -- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
---
+-- 
 CREATE DATABASE zimbra;
 ALTER DATABASE zimbra DEFAULT CHARACTER SET utf8;
 
@@ -30,7 +30,7 @@ GRANT ALL ON *.* TO 'zimbra' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'zimbra'@'localhost' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'zimbra'@'localhost.localdomain' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'root'@'localhost.localdomain' WITH GRANT OPTION;
-
+ 
 -- -----------------------------------------------------------------------
 -- volumes
 -- -----------------------------------------------------------------------
@@ -99,8 +99,8 @@ CREATE TABLE mailbox (
    comment             VARCHAR(255),               -- usually the main email address originally associated with the mailbox
    last_soap_access    INTEGER UNSIGNED NOT NULL DEFAULT 0,
    new_messages        INTEGER UNSIGNED NOT NULL DEFAULT 0,
-   idx_deferred_count  INTEGER NOT NULL DEFAULT 0, -- deprecated
-   highest_indexed     VARCHAR(21), -- deprecated
+   idx_deferred_count  INTEGER UNSIGNED NOT NULL DEFAULT 0, -- number of items waiting to be highest
+   highest_indexed     VARCHAR(21), -- mod_content of highest item in the index
 
    UNIQUE INDEX i_account_id (account_id),
    INDEX i_index_volume_id (index_volume_id),
@@ -168,7 +168,7 @@ CREATE TABLE table_maintenance (
    maintenance_date    DATETIME NOT NULL,
    last_optimize_date  DATETIME,
    num_rows            INTEGER UNSIGNED NOT NULL,
-
+  
    PRIMARY KEY (table_name, database_name)
 ) ENGINE = InnoDB;
 
@@ -177,7 +177,7 @@ CREATE TABLE service_status (
    service  VARCHAR(255) NOT NULL,
    time     DATETIME,
    status   BOOLEAN,
-
+  
    UNIQUE INDEX i_server_service (server(100), service(100))
 ) ENGINE = MyISAM;
 
@@ -211,29 +211,9 @@ CREATE TABLE mobile_devices (
    remote_wipe_req     INTEGER UNSIGNED,
    remote_wipe_ack     INTEGER UNSIGNED,
    policy_values       VARCHAR(512),
-   last_used_date      DATE,
-   deleted_by_user     BOOLEAN NOT NULL DEFAULT 0,
-   model               VARCHAR(64),
-   imei                VARCHAR(64),
-   friendly_name       VARCHAR(512),
-   os                  VARCHAR(64),
-   os_language         VARCHAR(64),
-   phone_number        VARCHAR(64),
-   
+
    PRIMARY KEY (mailbox_id, device_id),
-   CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
-   INDEX i_last_used_date (last_used_date)
-) ENGINE = InnoDB;
-
--- Tracks ACLs to be pushed to LDAP
-CREATE TABLE pending_acl_push (
-   mailbox_id  INTEGER UNSIGNED NOT NULL,
-   item_id     INTEGER UNSIGNED NOT NULL,
-   date        BIGINT UNSIGNED NOT NULL,
-
-   PRIMARY KEY (mailbox_id, item_id, date),
-   CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
-   INDEX i_date (date)
+   CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 
