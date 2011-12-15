@@ -1,24 +1,24 @@
---
+-- 
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 Zimbra, Inc.
---
+-- Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+-- 
 -- The contents of this file are subject to the Zimbra Public License
 -- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
---
+-- 
 -- Software distributed under the License is distributed on an "AS IS"
 -- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
---
+-- 
 CREATE DATABASE ${DATABASE_NAME}
 DEFAULT CHARACTER SET utf8;
 
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    mailbox_id    INTEGER UNSIGNED NOT NULL,
    id            INTEGER UNSIGNED NOT NULL,
-   type          TINYINT NOT NULL,           -- 1 = folder, 5 = message, etc.
+   type          TINYINT NOT NULL,           -- 1 = folder, 3 = tag, etc.
    parent_id     INTEGER UNSIGNED,
    folder_id     INTEGER UNSIGNED,
    index_id      INTEGER UNSIGNED,
@@ -30,9 +30,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    unread        INTEGER UNSIGNED,           -- stored separately from the other flags so we can index it
    flags         INTEGER NOT NULL DEFAULT 0,
    tags          BIGINT NOT NULL DEFAULT 0,
-   tag_names     TEXT,
    sender        VARCHAR(128),
-   recipients    VARCHAR(128),
    subject       TEXT,
    name          VARCHAR(128),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
@@ -45,8 +43,13 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    INDEX i_parent_id (mailbox_id, parent_id),-- for looking up a parent\'s children
    INDEX i_folder_id_date (mailbox_id, folder_id, date), -- for looking up by folder and sorting by date
    INDEX i_index_id (mailbox_id, index_id),  -- for looking up based on search results
+   INDEX i_unread (mailbox_id, unread),      -- there should be a small number of items with unread=TRUE
+                                             -- no compound index on (unread, date), so we save space at
+                                             -- the expense of sorting a small number of rows
    INDEX i_date (mailbox_id, date),          -- fallback index in case other constraints are not specified
    INDEX i_mod_metadata (mailbox_id, mod_metadata),      -- used by the sync code
+   INDEX i_tags_date (mailbox_id, tags, date),           -- for tag searches
+   INDEX i_flags_date (mailbox_id, flags, date),         -- for flag searches
    INDEX i_volume_id (mailbox_id, volume_id),            -- for the foreign key into the volume table
 
    UNIQUE INDEX i_name_folder_id (mailbox_id, folder_id, name),   -- for namespace uniqueness
@@ -60,7 +63,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    mailbox_id    INTEGER UNSIGNED NOT NULL,
    id            INTEGER UNSIGNED NOT NULL,
-   type          TINYINT NOT NULL,           -- 1 = folder, 5 = message, etc.
+   type          TINYINT NOT NULL,           -- 1 = folder, 3 = tag, etc.
    parent_id     INTEGER UNSIGNED,
    folder_id     INTEGER UNSIGNED,
    index_id      INTEGER UNSIGNED,
@@ -72,9 +75,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    unread        INTEGER UNSIGNED,           -- stored separately from the other flags so we can index it
    flags         INTEGER NOT NULL DEFAULT 0,
    tags          BIGINT NOT NULL DEFAULT 0,
-   tag_names     TEXT,
    sender        VARCHAR(128),
-   recipients    VARCHAR(128),
    subject       TEXT,
    name          VARCHAR(128),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
@@ -87,8 +88,13 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    INDEX i_parent_id (mailbox_id, parent_id),-- for looking up a parent\'s children
    INDEX i_folder_id_date (mailbox_id, folder_id, date), -- for looking up by folder and sorting by date
    INDEX i_index_id (mailbox_id, index_id),  -- for looking up based on search results
+   INDEX i_unread (mailbox_id, unread),      -- there should be a small number of items with unread=TRUE
+                                             -- no compound index on (unread, date), so we save space at
+                                             -- the expense of sorting a small number of rows
    INDEX i_date (mailbox_id, date),          -- fallback index in case other constraints are not specified
    INDEX i_mod_metadata (mailbox_id, mod_metadata),      -- used by the sync code
+   INDEX i_tags_date (mailbox_id, tags, date),           -- for tag searches
+   INDEX i_flags_date (mailbox_id, flags, date),         -- for flag searches
    INDEX i_volume_id (mailbox_id, volume_id),            -- for the foreign key into the volume table
 
    -- Must not enforce unique index on (mailbox_id, folder_id, name) for the dumpster version!
@@ -135,32 +141,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision_dumpster (
 
    CONSTRAINT fk_revision_dumpster_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_revision_dumpster_item_id FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item_dumpster(mailbox_id, id) ON DELETE CASCADE
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tag (
-   mailbox_id    INTEGER UNSIGNED NOT NULL,
-   id            INTEGER NOT NULL,
-   name          VARCHAR(128) NOT NULL,
-   color         BIGINT,
-   item_count    INTEGER NOT NULL DEFAULT 0,
-   unread        INTEGER NOT NULL DEFAULT 0,
-   listed        BOOLEAN NOT NULL DEFAULT FALSE,
-   sequence      INTEGER UNSIGNED NOT NULL,  -- change number for rename/recolor/etc.
-   policy        VARCHAR(1024),
-
-   PRIMARY KEY (mailbox_id, id),
-   UNIQUE INDEX i_tag_name (mailbox_id, name),
-   CONSTRAINT fk_tag_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
-) ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tagged_item (
-   mailbox_id    INTEGER UNSIGNED NOT NULL,
-   tag_id        INTEGER NOT NULL,
-   item_id       INTEGER UNSIGNED NOT NULL,
-
-   UNIQUE INDEX i_tagged_item_unique (mailbox_id, tag_id, item_id),
-   CONSTRAINT fk_tagged_item_tag FOREIGN KEY (mailbox_id, tag_id) REFERENCES ${DATABASE_NAME}.tag(mailbox_id, id) ON DELETE CASCADE,
-   CONSTRAINT fk_tagged_item_item FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.open_conversation (
@@ -219,7 +199,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.pop3_message (
    data_source_id CHAR(36) NOT NULL,
    uid            VARCHAR(255) BINARY NOT NULL,
    item_id        INTEGER UNSIGNED NOT NULL,
-
+   
    PRIMARY KEY (mailbox_id, item_id),
    CONSTRAINT fk_pop3_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
 ) ENGINE = InnoDB;
@@ -252,7 +232,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.imap_message (
    uid            BIGINT NOT NULL,
    item_id        INTEGER UNSIGNED NOT NULL,
    flags          INTEGER NOT NULL DEFAULT 0,
-
+   
    PRIMARY KEY (mailbox_id, item_id),
    CONSTRAINT fk_imap_message_mailbox_id FOREIGN KEY (mailbox_id)
       REFERENCES zimbra.mailbox(id) ON DELETE CASCADE,
@@ -270,7 +250,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.data_source_item (
    folder_id      INTEGER UNSIGNED NOT NULL DEFAULT 0,
    remote_id      VARCHAR(255) BINARY NOT NULL,
    metadata       MEDIUMTEXT,
-
+   
    PRIMARY KEY (mailbox_id, item_id),
    UNIQUE INDEX i_remote_id (mailbox_id, data_source_id, remote_id),   -- for reverse lookup
    CONSTRAINT fk_data_source_item_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
