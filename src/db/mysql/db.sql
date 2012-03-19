@@ -1,17 +1,17 @@
--- 
+--
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
--- 
+-- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Zimbra, Inc.
+--
 -- The contents of this file are subject to the Zimbra Public License
 -- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
--- 
+--
 -- Software distributed under the License is distributed on an "AS IS"
 -- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
--- 
+--
 CREATE DATABASE zimbra;
 ALTER DATABASE zimbra DEFAULT CHARACTER SET utf8;
 
@@ -30,7 +30,7 @@ GRANT ALL ON *.* TO 'zimbra' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'zimbra'@'localhost' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'zimbra'@'localhost.localdomain' WITH GRANT OPTION;
 GRANT ALL ON *.* TO 'root'@'localhost.localdomain' WITH GRANT OPTION;
- 
+
 -- -----------------------------------------------------------------------
 -- volumes
 -- -----------------------------------------------------------------------
@@ -99,8 +99,10 @@ CREATE TABLE mailbox (
    comment             VARCHAR(255),               -- usually the main email address originally associated with the mailbox
    last_soap_access    INTEGER UNSIGNED NOT NULL DEFAULT 0,
    new_messages        INTEGER UNSIGNED NOT NULL DEFAULT 0,
-   idx_deferred_count  INTEGER UNSIGNED NOT NULL DEFAULT 0, -- number of items waiting to be highest
-   highest_indexed     VARCHAR(21), -- mod_content of highest item in the index
+   idx_deferred_count  INTEGER NOT NULL DEFAULT 0, -- deprecated
+   highest_indexed     VARCHAR(21), -- deprecated
+   version             VARCHAR(16),
+   last_purge_at       INTEGER UNSIGNED NOT NULL DEFAULT 0,
 
    UNIQUE INDEX i_account_id (account_id),
    INDEX i_index_volume_id (index_volume_id),
@@ -168,7 +170,7 @@ CREATE TABLE table_maintenance (
    maintenance_date    DATETIME NOT NULL,
    last_optimize_date  DATETIME,
    num_rows            INTEGER UNSIGNED NOT NULL,
-  
+
    PRIMARY KEY (table_name, database_name)
 ) ENGINE = InnoDB;
 
@@ -177,7 +179,7 @@ CREATE TABLE service_status (
    service  VARCHAR(255) NOT NULL,
    time     DATETIME,
    status   BOOLEAN,
-  
+
    UNIQUE INDEX i_server_service (server(100), service(100))
 ) ENGINE = MyISAM;
 
@@ -211,189 +213,30 @@ CREATE TABLE mobile_devices (
    remote_wipe_req     INTEGER UNSIGNED,
    remote_wipe_ack     INTEGER UNSIGNED,
    policy_values       VARCHAR(512),
-
+   last_used_date      DATE,
+   deleted_by_user     BOOLEAN NOT NULL DEFAULT 0,
+   model               VARCHAR(64),
+   imei                VARCHAR(64),
+   friendly_name       VARCHAR(512),
+   os                  VARCHAR(64),
+   os_language         VARCHAR(64),
+   phone_number        VARCHAR(64),
+   unapproved_appl_list TEXT NULL,
+   approved_appl_list   TEXT NULL,
+   
    PRIMARY KEY (mailbox_id, device_id),
-   CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE
+   CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
+   INDEX i_last_used_date (last_used_date)
 ) ENGINE = InnoDB;
 
+-- Tracks ACLs to be pushed to LDAP
+CREATE TABLE pending_acl_push (
+   mailbox_id  INTEGER UNSIGNED NOT NULL,
+   item_id     INTEGER UNSIGNED NOT NULL,
+   date        BIGINT UNSIGNED NOT NULL,
 
--- -----------------------------------------------------------------------
--- IM tables (Wildfire code)
--- -----------------------------------------------------------------------
-CREATE TABLE jiveUserProp (
-  username           VARCHAR(200)     NOT NULL,
-  name               VARCHAR(100)    NOT NULL,
-  propValue          TEXT            NOT NULL,
-  PRIMARY KEY (username, name)
-);
+   PRIMARY KEY (mailbox_id, item_id, date),
+   CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
+   INDEX i_date (date)
+) ENGINE = InnoDB;
 
-CREATE TABLE jiveGroupProp (
-  groupName             VARCHAR(50)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             TEXT            NOT NULL,
-  PRIMARY KEY (groupName, name)
-);
-
-CREATE TABLE jiveGroupUser (
-  groupName             VARCHAR(50)     NOT NULL,
-  username               VARCHAR(200)    NOT NULL,
-  administrator         TINYINT         NOT NULL,
-  PRIMARY KEY (groupName, username, administrator)
-);
-
-CREATE TABLE jivePrivate (
-  username               VARCHAR(200)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  namespace             VARCHAR(200)    NOT NULL,
-  value                 TEXT            NOT NULL,
-  PRIMARY KEY (username, name, namespace(20))
-);
-
-CREATE TABLE jiveOffline (
-  username               VARCHAR(200)     NOT NULL,
-  messageID             BIGINT          NOT NULL,
-  creationDate          CHAR(15)        NOT NULL,
-  messageSize           INTEGER         NOT NULL,
-  message               TEXT            NOT NULL,
-  PRIMARY KEY (username, messageID)
-);
-
-CREATE TABLE jiveRoster (
-  rosterID              BIGINT          NOT NULL,
-  username               VARCHAR(200)    NOT NULL,
-  jid                   TEXT            NOT NULL,
-  sub                   TINYINT         NOT NULL,
-  ask                   TINYINT         NOT NULL,
-  recv                  TINYINT         NOT NULL,
-  nick                  VARCHAR(200),
-  PRIMARY KEY (rosterID),
-  INDEX jiveRoster_unameid_idx (username)
-);
-
-CREATE TABLE jiveRosterGroups (
-  rosterID              BIGINT          NOT NULL,
-  rank                  TINYINT         NOT NULL,
-  groupName             VARCHAR(200)    NOT NULL,
-  PRIMARY KEY (rosterID, rank),
-  INDEX jiveRosterGroup_rosterid_idx (rosterID)
-);
-
-CREATE TABLE jiveVCard (
-  username              VARCHAR(200)     NOT NULL,
-  value                 TEXT            NOT NULL,
-  PRIMARY KEY (username)
-);
-
-CREATE TABLE jiveID (
-  idType                INTEGER         NOT NULL,
-  id                    BIGINT          NOT NULL,
-  PRIMARY KEY (idType)
-);
-
-CREATE TABLE jiveProperty (
-  name        VARCHAR(100)              NOT NULL,
-  propValue   TEXT                      NOT NULL,
-  PRIMARY KEY (name)
-);
-
-CREATE TABLE jiveExtComponentConf (
-  subdomain             VARCHAR(200)    NOT NULL,
-  secret                VARCHAR(200),
-  permission            VARCHAR(10)     NOT NULL,
-  PRIMARY KEY (subdomain)
-);
-
-CREATE TABLE jiveRemoteServerConf (
-  domain                VARCHAR(200)    NOT NULL,
-  remotePort            INTEGER,
-  permission            VARCHAR(10)     NOT NULL,
-  PRIMARY KEY (domain)
-);
-
-CREATE TABLE jivePrivacyList (
-  username               VARCHAR(200)     NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  isDefault             TINYINT         NOT NULL,
-  list                  TEXT            NOT NULL,
-  PRIMARY KEY (username, name),
-  INDEX jivePList_default_idx (username, isDefault)
-);
-
-CREATE TABLE jiveSASLAuthorized (
-  username             VARCHAR(200)   NOT NULL,
-  principal           TEXT          NOT NULL,
-  PRIMARY KEY (username, principal(100))
-);
-
-CREATE TABLE mucRoom (
-  service             VARCHAR(255)  NOT NULL,
-  roomID              BIGINT        NOT NULL,
-  creationDate        CHAR(15)      NOT NULL,
-  modificationDate    CHAR(15)      NOT NULL,
-  name                VARCHAR(50)   NOT NULL,
-  naturalName         VARCHAR(255)  NOT NULL,
-  description         VARCHAR(255),
-  lockedDate          CHAR(15)      NOT NULL,
-  emptyDate           CHAR(15)      NULL,
-  canChangeSubject    TINYINT       NOT NULL,
-  maxUsers            INTEGER       NOT NULL,
-  publicRoom          TINYINT       NOT NULL,
-  moderated           TINYINT       NOT NULL,
-  membersOnly         TINYINT       NOT NULL,
-  canInvite           TINYINT       NOT NULL,
-  password            VARCHAR(50)   NULL,
-  canDiscoverJID      TINYINT       NOT NULL,
-  logEnabled          TINYINT       NOT NULL,
-  subject             VARCHAR(100)  NULL,
-  rolesToBroadcast    TINYINT       NOT NULL,
-  useReservedNick     TINYINT       NOT NULL,
-  canChangeNick       TINYINT       NOT NULL,
-  canRegister         TINYINT       NOT NULL,
-  PRIMARY KEY (service,name),
-  INDEX mucRoom_roomid_idx (service,roomID)
-);
-
-CREATE TABLE mucRoomProp (
-  service               VARCHAR(255)    NOT NULL,
-  roomID                BIGINT          NOT NULL,
-  name                  VARCHAR(100)    NOT NULL,
-  propValue             TEXT            NOT NULL,
-  PRIMARY KEY (service(200),roomID, name)
-);
-
-CREATE TABLE mucAffiliation (
-  service             VARCHAR(255)  NOT NULL,
-  roomID              BIGINT        NOT NULL,
-  jid                 TEXT          NOT NULL,
-  affiliation         TINYINT       NOT NULL,
-  PRIMARY KEY (service,roomID,jid(70))
-);
-
-CREATE TABLE mucMember (
-  service             VARCHAR(255)  NOT NULL,
-  roomID              BIGINT        NOT NULL,
-  jid                 TEXT          NOT NULL,
-  nickname            VARCHAR(255)  NULL,
-  firstName           VARCHAR(100)  NULL,
-  lastName            VARCHAR(100)  NULL,
-  url                 VARCHAR(100)  NULL,
-  email               VARCHAR(100)  NULL,
-  faqentry            VARCHAR(100)  NULL,
-  PRIMARY KEY (service,roomID,jid(70))
-);
-
-CREATE TABLE mucConversationLog (
-  service             VARCHAR(255)  NOT NULL,
-  roomID              BIGINT        NOT NULL,
-  sender              TEXT          NOT NULL,
-  nickname            VARCHAR(255)  NULL,
-  time                CHAR(15)      NOT NULL,
-  subject             VARCHAR(255)  NULL,
-  body                TEXT          NULL,
-  INDEX mucLog_time_idx (time)
-);
-
--- Finally, insert default table values.
-INSERT INTO jiveID (idType, id) VALUES (18, 1);
-INSERT INTO jiveID (idType, id) VALUES (19, 1);
-INSERT INTO jiveID (idType, id) VALUES (23, 1);
