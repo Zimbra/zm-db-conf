@@ -1,7 +1,7 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Zimbra, Inc.
 # 
 # The contents of this file are subject to the Zimbra Public License
 # Version 1.3 ("License"); you may not use this file except in
@@ -19,6 +19,7 @@ use DBI;
 use FileHandle;
 use POSIX qw(:signal_h :errno_h :sys_wait_h);
 use File::Temp qw(tempfile);
+use List::Util qw(min);
 
 #############
 
@@ -31,6 +32,7 @@ my $DATABASE = "zimbra";
 my $LOGGER_DATABASE = "zimbra_logger";
 my $ZIMBRA_HOME = $ENV{ZIMBRA_HOME} || '/opt/zimbra';
 my $ZMLOCALCONFIG = "$ZIMBRA_HOME/bin/zmlocalconfig";
+my $ZMSOAP = "$ZIMBRA_HOME/bin/zmsoap";
 my $SQLLOGFH;
 
 if ($^O !~ /MSWin/i) {
@@ -38,8 +40,6 @@ if ($^O !~ /MSWin/i) {
     chomp $DB_PASSWORD;
     $DB_USER = `$ZMLOCALCONFIG -m nokey zimbra_mysql_user`;
     chomp $DB_USER;
-    $LOGGER_DB_PASSWORD = `$ZMLOCALCONFIG -s -m nokey zimbra_logger_mysql_password`;
-    chomp $LOGGER_DB_PASSWORD;
     $MYSQL = "/opt/zimbra/bin/mysql";
 }
 
@@ -52,10 +52,12 @@ sub getBackupVersion {
     my $versionInDb = (runSql("SELECT value FROM config WHERE name = 'backup.version'"))[0];
 	return $versionInDb;
 }
+
 sub getRedologVersion {
     my $versionInDb = (runSql("SELECT value FROM config WHERE name = 'redolog.version'"))[0];
 	return $versionInDb;
 }
+
 sub getLoggerSchemaVersion {
     my $versionInDb = (runLoggerSql("SELECT value FROM config WHERE name = 'db.version'"))[0];
 	return $versionInDb;
@@ -78,6 +80,7 @@ sub verifyLoggerSchemaVersion($) {
     }
     Migrate::log("Verified schema version $version.");
 }
+
 sub verifyBackupVersion($) {
     my ($version) = @_;
     my $versionInDb = getBackupVersion();
@@ -86,6 +89,7 @@ sub verifyBackupVersion($) {
     }
     Migrate::log("Verified backup version $version.");
 }
+
 sub verifyRedologVersion($) {
     my ($version) = @_;
     my $versionInDb = getRedologVersion();
@@ -136,6 +140,7 @@ SET_SCHEMA_VERSION_EOF
     Migrate::log("Inserting Backup schema version $version.");
     runSql($sql);
 }
+
 sub updateBackupVersion($$) {
     my ($oldVersion, $newVersion) = @_;
     verifyBackupVersion($oldVersion) if ($oldVersion ne "");
@@ -147,6 +152,7 @@ SET_SCHEMA_VERSION_EOF
     Migrate::log("Updating Backup schema version from $oldVersion to $newVersion.");
     runSql($sql);
 }
+
 sub updateRedologVersion($$) {
     my ($oldVersion, $newVersion) = @_;
     verifyRedologVersion($oldVersion) if ($oldVersion ne "");
@@ -396,7 +402,7 @@ sub log($) {
 sub logSql($) {
   my ($input) = @_;
   unless (defined($SQLLOGFH)) {
-    $SQLLOGFH = new FileHandle ">> /opt/zimbra/log/sqlMigration.log";    
+    $SQLLOGFH = new FileHandle ">> /opt/zimbra/log/sqlMigration.log";
     select $SQLLOGFH;
     $|=1;
     select STDOUT;
@@ -405,6 +411,28 @@ sub logSql($) {
   }
   my $output = scalar(localtime()).": $input\n";
   print $SQLLOGFH $output;
+}
+
+sub loadOutdatedMailboxes($) {
+  my ($mboxver) = @_;
+  my @acctids = runSql("SELECT account_id FROM mailbox WHERE IFNULL(version, '') <> '$mboxver'");
+
+  while (scalar(@acctids) > 0) {
+    my @slice = splice(@acctids, 0, 50);
+    Migrate::log("migrating account(s): @slice");
+
+    my $request = '<BatchRequest xmlns="urn:zimbra">';
+    foreach my $acctid (@slice) {
+      $request .= "<GetMailboxRequest xmlns=\"urn:zimbraAdmin\"><mbox id=\"$acctid\"/></GetMailboxRequest>";
+    }
+    $request .= '</BatchRequest>';
+    
+    unless (open(ZMSOAP, "| $ZMSOAP -z > /dev/null")) {
+       Migrate::myquit(1, "Unable to run zmsoap");
+    }
+    print(ZMSOAP $request);
+    close(ZMSOAP);
+  }
 }
 
 1;

@@ -1,17 +1,17 @@
--- 
+--
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2008, 2009, 2010, 2011 VMware, Inc.
--- 
+-- Copyright (C) 2008, 2009, 2010 Zimbra, Inc.
+--
 -- The contents of this file are subject to the Zimbra Public License
 -- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
--- 
+--
 -- Software distributed under the License is distributed on an "AS IS"
 -- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
--- 
+--
 
 PRAGMA ${DATABASE_NAME}.default_cache_size = 500;
 PRAGMA ${DATABASE_NAME}.encoding = "UTF-8";
@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mailbox (
    last_soap_access    INTEGER UNSIGNED NOT NULL DEFAULT 0,
    new_messages        INTEGER UNSIGNED NOT NULL DEFAULT 0,
    idx_deferred_count  INTEGER UNSIGNED NOT NULL DEFAULT 0,
-   highest_indexed     VARCHAR(21)                    -- mod_content of highest item in the index
+   highest_indexed     VARCHAR(21),                   -- mod_content of highest item in the index
+   version             VARCHAR(16),
+   last_purge_at       INTEGER UNSIGNED NOT NULL DEFAULT 0
 );
 
 -- -----------------------------------------------------------------------
@@ -57,7 +59,6 @@ CREATE TABLE ${DATABASE_NAME}.out_of_office (
 
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_out_of_office_sent_on ON out_of_office(sent_on);
 
-
 -- -----------------------------------------------------------------------
 -- items in mailboxes
 -- -----------------------------------------------------------------------
@@ -71,23 +72,25 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    imap_id       INTEGER UNSIGNED,
    date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
-   volume_id     TINYINT UNSIGNED,
-   blob_digest   VARCHAR(28),                -- reference to blob, meaningful only for certain item types
+   locator       VARCHAR(1024),
+   blob_digest   VARCHAR(44),                -- reference to blob, meaningful only for certain item types
    unread        INTEGER UNSIGNED,           -- stored separately from the other flags so we can index it
    flags         INTEGER NOT NULL DEFAULT 0,
    tags          BIGINT NOT NULL DEFAULT 0,
+   tag_names     TEXT,
    sender        VARCHAR(128),
+   recipients    VARCHAR(128),
    subject       TEXT,
-   name          VARCHAR(128),               -- namespace entry for item (e.g. tag name, folder name, document/wiki filename)
+   name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document/wiki filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
    change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
    mod_content   INTEGER UNSIGNED NOT NULL,  -- change number for last change to "content" (e.g. blob)
    change_mask   INTEGER UNSIGNED,           -- bitmask of changes since the last server push
+   uuid          VARCHAR(127),               -- e.g. "d94e42c4-1636-11d9-b904-4dd689d02402"
 
    -- UNIQUE (folder_id, name),  -- for namespace uniqueness
 
-   -- CONSTRAINT fk_mail_item_volume_id FOREIGN KEY (volume_id) REFERENCES zimbra.volume(id),
    CONSTRAINT fk_mail_item_parent_id FOREIGN KEY (parent_id) REFERENCES mail_item(id) ON UPDATE CASCADE,
    CONSTRAINT fk_mail_item_folder_id FOREIGN KEY (folder_id) REFERENCES mail_item(id) ON UPDATE CASCADE
 );
@@ -96,14 +99,10 @@ CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_type ON mail_item(type);
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_parent_id ON mail_item(parent_id);            -- for looking up a parent\'s children
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_folder_id_date ON mail_item(folder_id, date DESC); -- for looking up by folder and sorting by date
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_index_id ON mail_item(index_id);              -- for looking up based on search results
-CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_unread ON mail_item(unread);                  -- there should be a small number of items with unread=TRUE
-                                                                         --   no compound index on (unread, date), so we save space at
-                                                                         --   the expense of sorting a small number of rows
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_date ON mail_item(date DESC);                 -- fallback index in case other constraints are not specified
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_mod_metadata ON mail_item(mod_metadata);      -- used by the sync code
-CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_tags_date ON mail_item(tags, date DESC);      -- for tag searches
-CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_flags_date ON mail_item(flags, date DESC);    -- for flag searches
 CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_change_mask ON mail_item(change_mask);  -- for figuring out which items to push during sync
+CREATE INDEX IF NOT EXISTS ${DATABASE_NAME}.i_mail_item_uuid ON mail_item(uuid);                      -- for looking up by uuid 
 
 -- -----------------------------------------------------------------------
 -- old versions of existing items
@@ -114,9 +113,9 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision (
    version       INTEGER UNSIGNED NOT NULL,
    date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
-   volume_id     TINYINT UNSIGNED,
-   blob_digest   VARCHAR(28),                -- reference to blob, meaningful for messages only (type == 5)
-   name          VARCHAR(128),               -- namespace entry for item (e.g. tag name, folder name, document filename)
+   locator       VARCHAR(1024),
+   blob_digest   VARCHAR(44),                -- reference to blob, meaningful for messages only (type == 5)
+   name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
    change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
@@ -124,6 +123,32 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision (
 
    PRIMARY KEY (item_id, version),
    CONSTRAINT fk_revision_item_id FOREIGN KEY (item_id) REFERENCES mail_item(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- -----------------------------------------------------------------------
+-- tags and flags
+-- -----------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tag (
+   id            INTEGER UNSIGNED NOT NULL PRIMARY KEY,
+   name          VARCHAR(128) NOT NULL,
+   color         BIGINT,
+   item_count    INTEGER NOT NULL DEFAULT 0,
+   unread        INTEGER NOT NULL DEFAULT 0,
+   listed        BOOLEAN NOT NULL DEFAULT FALSE,
+   sequence      INTEGER UNSIGNED NOT NULL,
+   policy        VARCHAR(1024),
+
+   UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tagged_item (
+   tag_id        INTEGER UNSIGNED NOT NULL,
+   item_id       INTEGER UNSIGNED NOT NULL,
+
+   UNIQUE (tag_id, item_id),
+   CONSTRAINT fk_tagged_item_tag FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE ON UPDATE CASCADE,
+   CONSTRAINT fk_tagged_item_item FOREIGN KEY (item_id) REFERENCES mail_item(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- -----------------------------------------------------------------------
