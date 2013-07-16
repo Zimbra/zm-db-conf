@@ -120,7 +120,6 @@ CREATE TABLE mailbox (
    highest_indexed     VARCHAR(21), -- deprecated
    version             VARCHAR(16),
    last_purge_at       INTEGER UNSIGNED NOT NULL DEFAULT 0,
-   itemcache_checkpoint       INTEGER UNSIGNED NOT NULL DEFAULT 0,
 
    UNIQUE INDEX i_account_id (account_id),
    INDEX i_index_volume_id (index_volume_id),
@@ -257,11 +256,4 @@ CREATE TABLE pending_acl_push (
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_date (date)
 ) ENGINE = InnoDB;
-
-CREATE TABLE current_sessions (
-	id				INTEGER UNSIGNED NOT NULL,
-	server_id		VARCHAR(127) NOT NULL,
-	PRIMARY KEY (id, server_id)
-) ENGINE = InnoDB; 
-
 
