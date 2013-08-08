@@ -2,13 +2,13 @@
 #
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2012 VMware, Inc.
-# 
+# Copyright (C) 2012 Zimbra, Inc.
+#
 # The contents of this file are subject to the Zimbra Public License
 # Version 1.3 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS"
 # basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 # ***** END LICENSE BLOCK *****
@@ -19,42 +19,33 @@ use Migrate;
 
 ########################################################################################################################
 
-Migrate::verifySchemaVersion(91);
+Migrate::verifySchemaVersion(92);
 
-addVolumeBlobsTable();
-addVolumeMetadataColumn();
+addItemcacheCheckpointColumn();
+addCurrentSessionsTable();
 
-Migrate::updateSchemaVersion(91, 92);
+Migrate::updateSchemaVersion(92, 100);
 
 exit(0);
 
 ########################################################################################################################
 
-sub addVolumeBlobsTable() {
-    Migrate::logSql("Adding VOLUME_BLOBS table...");
+sub addItemcacheCheckpointColumn() {
+    Migrate::logSql("Adding ITEMCACHE_CHECKPOINT column to mailbox table...");
     my $sql = <<_EOF_;
-CREATE TABLE IF NOT EXISTS volume_blobs (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  volume_id TINYINT NOT NULL,
-  mailbox_id INTEGER NOT NULL,
-  item_id INTEGER NOT NULL,
-  revision INTEGER NOT NULL,
-  blob_digest VARCHAR(44),
-  processed BOOLEAN default false,
-  
-  INDEX i_blob_digest (blob_digest),
+ALTER TABLE mailbox ADD COLUMN itemcache_checkpoint INTEGER UNSIGNED NOT NULL DEFAULT 0;
+_EOF_
+  Migrate::runSql($sql);
+}
 
-  CONSTRAINT uc_blobinfo UNIQUE (volume_id,mailbox_id,item_id,revision)
+sub addCurrentSessionsTable() {
+    Migrate::logSql("Adding CURRENT_SESSIONS table...");
+    my $sql = <<_EOF_;
+CREATE TABLE IF NOT EXISTS current_sessions (
+	id				INTEGER UNSIGNED NOT NULL,
+	server_id		VARCHAR(127) NOT NULL,
+	PRIMARY KEY (id, server_id)
 ) ENGINE = InnoDB;
 _EOF_
   Migrate::runSql($sql);
 }
-
-sub addVolumeMetadataColumn() {
-    Migrate::logSql("Adding METADATA column to VOLUME...");
-    my $sql = <<_EOF_;
-ALTER TABLE volume ADD COLUMN metadata MEDIUMTEXT AFTER compression_threshold;
-_EOF_
-  Migrate::runSql($sql);
-}
-
