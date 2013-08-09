@@ -1,10 +1,10 @@
 -- 
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
+-- Copyright (C) 2008, 2009, 2010, 2011 VMware, Inc.
 -- 
 -- The contents of this file are subject to the Zimbra Public License
--- Version 1.4 ("License"); you may not use this file except in
+-- Version 1.3 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
 -- 
@@ -135,7 +135,19 @@ CREATE TABLE mobile_devices (
    remote_wipe_req     INTEGER UNSIGNED,
    remote_wipe_ack     INTEGER UNSIGNED,
    policy_values       VARCHAR(512),
+   last_used_date      DATE,
+   deleted_by_user     BOOLEAN NOT NULL DEFAULT 0,
+   model               VARCHAR(64),
+   imei                VARCHAR(64),
+   friendly_name       VARCHAR(512),
+   os                  VARCHAR(64),
+   os_language         VARCHAR(64),
+   phone_number        VARCHAR(64),
+   unapproved_appl_list TEXT NULL,
+   approved_appl_list   TEXT NULL,
 
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE
 );
+
+CREATE INDEX i_mobile_devices_last_used_date ON mobile_devices(last_used_date);
