@@ -2,7 +2,7 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2008, 2009, 2010, 2012, 2013 Zimbra Software, LLC.
+# Copyright (C) 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
 # Version 1.4 ("License"); you may not use this file except in
@@ -31,7 +31,7 @@ my @groups = Migrate::getMailboxGroups();
 
 my @sql = ();
 foreach my $group (@groups) {
-  foreach my $table (qw(mail_item appointment imap_folder imap_message open_conversation pop3_message revision tombstone)) {
+  foreach my $table qw(mail_item appointment imap_folder imap_message open_conversation pop3_message revision tombstone) {
    print "Adding $group.$table to be optimized\n";
     push(@sql, "OPTIMIZE TABLE $group.$table;");
   }
