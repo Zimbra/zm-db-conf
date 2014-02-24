@@ -2,7 +2,7 @@
 #
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2011, 2013 Zimbra Software, LLC.
+# Copyright (C) 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
 # Version 1.4 ("License"); you may not use this file except in
@@ -16,36 +16,36 @@
 
 use strict;
 use Migrate;
-my $concurrent = 10;
+
 ########################################################################################################################
 
-Migrate::verifySchemaVersion(81);
+Migrate::verifySchemaVersion(92);
 
-addRecipientsColumn();
+addItemcacheCheckpointColumn();
+addCurrentSessionsTable();
 
-Migrate::updateSchemaVersion(81, 82);
+Migrate::updateSchemaVersion(92, 100);
 
 exit(0);
 
 ########################################################################################################################
 
-sub addRecipientsColumn() {
-  my @groups = Migrate::getMailboxGroups();
-  my @sql = ();
-  foreach my $group (@groups) {
+sub addItemcacheCheckpointColumn() {
+    Migrate::logSql("Adding ITEMCACHE_CHECKPOINT column to mailbox table...");
     my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item ADD COLUMN recipients VARCHAR(128) AFTER sender;
+ALTER TABLE mailbox ADD COLUMN itemcache_checkpoint INTEGER UNSIGNED NOT NULL DEFAULT 0;
 _EOF_
-    push(@sql,$sql);
-  }
-  Migrate::runSqlParallel($concurrent,@sql);
+  Migrate::runSql($sql);
+}
 
-  @sql = ();
-  foreach my $group (@groups) {
+sub addCurrentSessionsTable() {
+    Migrate::logSql("Adding CURRENT_SESSIONS table...");
     my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item_dumpster ADD COLUMN recipients VARCHAR(128) AFTER sender;
+CREATE TABLE IF NOT EXISTS current_sessions (
+	id				INTEGER UNSIGNED NOT NULL,
+	server_id		VARCHAR(127) NOT NULL,
+	PRIMARY KEY (id, server_id)
+) ENGINE = InnoDB;
 _EOF_
-    push(@sql,$sql);
-  }
-  Migrate::runSqlParallel($concurrent,@sql);
+  Migrate::runSql($sql);
 }
