@@ -21,8 +21,10 @@ use Migrate;
 
 Migrate::verifySchemaVersion(100);
 
-addPrevFoldersColumnToMailItem();
-addPrevFoldersColumnToMailItemDumpster();
+foreach my $group (Migrate::getMailboxGroups()) {
+    addPrevFoldersColumnToMailItem($group);
+    addPrevFoldersColumnToMailItemDumpster($group);
+}
 
 Migrate::updateSchemaVersion(100, 101);
 
@@ -30,18 +32,20 @@ exit(0);
 
 ########################################################################################################################
 
-sub addPrevFoldersColumnToMailItem() {
+sub addPrevFoldersColumnToMailItem($) {
+    my ($group) = @_;
     Migrate::logSql("Adding prev_folder_ids column to mail_item table...");
     my $sql = <<_EOF_;
-ALTER TABLE mail_item ADD COLUMN prev_folders TEXT AFTER folder_id;
+ALTER TABLE $group.mail_item ADD COLUMN prev_folders TEXT AFTER folder_id;
 _EOF_
   Migrate::runSql($sql);
 }
 
-sub addPrevFoldersColumnToMailItemDumpster() {
+sub addPrevFoldersColumnToMailItemDumpster($) {
+    my ($group) = @_;
     Migrate::logSql("Adding prev_folder_ids column to mail_item_dumpster table...");
     my $sql = <<_EOF_;
-ALTER TABLE mail_item_dumpster ADD COLUMN prev_folders TEXT AFTER folder_id;
+ALTER TABLE $group.mail_item_dumpster ADD COLUMN prev_folders TEXT AFTER folder_id;
 _EOF_
   Migrate::runSql($sql);
 }
