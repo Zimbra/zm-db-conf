@@ -24,7 +24,6 @@ exit(0);
 
 sub enforceCharset()
 {
-  my @sqls;
   my @tables = ('mail_item_dumpster', 'revision_dumpster', 'appointment_dumpster');
   foreach my $group (Migrate::getMailboxGroups()) {
     foreach my $table (@tables) {
@@ -49,10 +48,8 @@ delimiter ;
 call convertCharset();
 drop procedure convertCharset;
 _EOF_
- push(@sqls,$sql);  
- }
- }
- my $concurrency = 10;
- Migrate::runSqlParallel($concurrency, @sqls);
+ Migrate::runSql($sql);
+}
+}
 }
 
