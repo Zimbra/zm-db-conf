@@ -30,8 +30,9 @@ my $DB_PASSWORD = "zimbra";
 my $LOGGER_DB_PASSWORD = "zimbra";
 my $DATABASE = "zimbra";
 my $LOGGER_DATABASE = "zimbra_logger";
-my $ZMLOCALCONFIG = "/opt/zimbra/bin/zmlocalconfig";
-my $ZMSOAP = "/opt/zimbra/bin/zmsoap";
+my $ZIMBRA_HOME = $ENV{ZIMBRA_HOME} || '/opt/zimbra';
+my $ZMLOCALCONFIG = "$ZIMBRA_HOME/bin/zmlocalconfig";
+my $ZMSOAP = "$ZIMBRA_HOME/bin/zmsoap";
 my $SQLLOGFH;
 my $DB_SOCKET;
 
