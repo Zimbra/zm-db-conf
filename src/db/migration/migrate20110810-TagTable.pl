@@ -30,8 +30,8 @@ my @groups = Migrate::getMailboxGroups();
 addTagTable();
 addTaggedItemTable();
 addTagNamesColumn();
-#can't drop indexes until *after* migration is complete
-#dropTagIndexes();
+
+#  See migrate20140624-DropMysqlIndexes.pl for dropping of tag related indexes in Zimbra 8.5
 
 Migrate::updateSchemaVersion(83, 84);
 
@@ -98,53 +98,6 @@ _EOF_
     Migrate::logSql("Adding TAG_NAMES column to $group.MAIL_ITEM and $group.MAIL_ITEM_DUMPSTER...");
     my $sql = <<_EOF_;
 ALTER TABLE $group.mail_item_dumpster ADD COLUMN tag_names TEXT AFTER tags;
-_EOF_
-    push(@sql,$sql);
-  }
-  Migrate::runSqlParallel($concurrent,@sql);
-}
-
-sub dropTagIndexes() {
-  my @sql = ();
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_unread indexes from $group.MAIL_ITEM...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item DROP INDEX i_unread;
-_EOF_
-    push(@sql,$sql);
-  }
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_tags indexes from $group.MAIL_ITEM...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item DROP INDEX i_tags_date;
-_EOF_
-    push(@sql,$sql);
-  }
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_flags indexes from $group.MAIL_ITEM...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item DROP INDEX i_flags_date;
-_EOF_
-    push(@sql,$sql);
-  }
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_unread indexes from $group.MAIL_ITEM_DUMPSTER...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item_dumpster DROP INDEX i_unread;
-_EOF_
-    push(@sql,$sql);
-  }
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_tags_date indexes from $group.MAIL_ITEM_DUMPSTER...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item_dumpster DROP INDEX i_tags_date;
-_EOF_
-    push(@sql,$sql);
-  }
-  foreach my $group (@groups) {
-    Migrate::logSql("Dropping i_flags_date indexes from $group.MAIL_ITEM_DUMPSTER...");
-    my $sql = <<_EOF_;
-ALTER TABLE $group.mail_item_dumpster DROP INDEX i_flags_date;
 _EOF_
     push(@sql,$sql);
   }
