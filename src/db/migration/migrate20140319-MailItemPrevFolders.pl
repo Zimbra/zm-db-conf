@@ -24,8 +24,10 @@ use Migrate;
 Migrate::verifySchemaVersion(100);
 
 foreach my $group (Migrate::getMailboxGroups()) {
+    Migrate::log("Migrating $group.  This can take a substantial amount of time...");
     addPrevFoldersColumnToMailItem($group);
     addPrevFoldersColumnToMailItemDumpster($group);
+    Migrate::log(print "done.\n)";
 }
 
 Migrate::updateSchemaVersion(100, 101);
