@@ -1,17 +1,15 @@
 --
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Zimbra, Inc.
+-- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 -- 
--- This program is free software: you can redistribute it and/or modify it under
--- the terms of the GNU General Public License as published by the Free Software Foundation,
--- version 2 of the License.
+-- The contents of this file are subject to the Zimbra Public License
+-- Version 1.4 ("License"); you may not use this file except in
+-- compliance with the License.  You may obtain a copy of the License at
+-- http://www.zimbra.com/license.
 -- 
--- This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
--- without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
--- See the GNU General Public License for more details.
--- You should have received a copy of the GNU General Public License along with this program.
--- If not, see <http://www.gnu.org/licenses/>.
+-- Software distributed under the License is distributed on an "AS IS"
+-- basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
 -- ***** END LICENSE BLOCK *****
 --
 CREATE DATABASE zimbra;
@@ -122,7 +120,6 @@ CREATE TABLE mailbox (
    highest_indexed     VARCHAR(21), -- deprecated
    version             VARCHAR(16),
    last_purge_at       INTEGER UNSIGNED NOT NULL DEFAULT 0,
-   itemcache_checkpoint       INTEGER UNSIGNED NOT NULL DEFAULT 0,
 
    UNIQUE INDEX i_account_id (account_id),
    INDEX i_index_volume_id (index_volume_id),
@@ -259,11 +256,4 @@ CREATE TABLE pending_acl_push (
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_date (date)
 ) ENGINE = InnoDB;
-
-CREATE TABLE current_sessions (
-	id				INTEGER UNSIGNED NOT NULL,
-	server_id		VARCHAR(127) NOT NULL,
-	PRIMARY KEY (id, server_id)
-) ENGINE = InnoDB; 
-
 
