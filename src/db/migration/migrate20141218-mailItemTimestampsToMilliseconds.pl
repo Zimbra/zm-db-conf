@@ -58,7 +58,7 @@ EOF
             push(@sqls, $sql);
         }
         my $tombstone = <<EOF;
-UPDATE $group.$tombstone SET date=date*1000;
+UPDATE $group.tombstone SET date=date*1000;
 EOF
         push(@sqls, $tombstone);
 	}
