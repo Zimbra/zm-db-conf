@@ -20,7 +20,7 @@
 use strict;
 use Migrate;
 
-Migrate::verifySchemaVersion(103);
+Migrate::verifySchemaVersion(120);
 
 my $sqlStmt = <<_SQL_;
 CREATE TABLE IF NOT EXISTS zmg_devices (
@@ -37,6 +37,6 @@ _SQL_
 
 Migrate::runSql($sqlStmt);
 
-Migrate::updateSchemaVersion(103, 104);
+Migrate::updateSchemaVersion(120, 121);
 
 exit(0);

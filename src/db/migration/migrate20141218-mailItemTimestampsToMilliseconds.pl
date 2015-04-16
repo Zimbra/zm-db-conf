@@ -20,10 +20,10 @@
 use strict;
 use Migrate;
 my $concurrent = 4;
-Migrate::verifySchemaVersion(103);
+Migrate::verifySchemaVersion(104);
 migrateDateColumns();
 convertToMilliseconds();
-Migrate::updateSchemaVersion(103, 120);
+Migrate::updateSchemaVersion(104, 120);
 exit(0);
 
 #####################
