@@ -23,7 +23,7 @@ use Migrate;
 Migrate::verifySchemaVersion(103);
 
 my $sqlStmt = <<_SQL_;
-CREATE TABLE zmg_devices (
+CREATE TABLE IF NOT EXISTS zmg_devices (
    mailbox_id          INTEGER UNSIGNED NOT NULL,
    device_id           VARCHAR(64) NOT NULL,
    reg_id              VARCHAR(255) NOT NULL,
