@@ -260,6 +260,12 @@ CREATE TABLE pending_acl_push (
    INDEX i_date (date)
 ) ENGINE = InnoDB;
 
+CREATE TABLE current_sessions (
+	id				INTEGER UNSIGNED NOT NULL,
+	server_id		VARCHAR(127) NOT NULL,
+	PRIMARY KEY (id, server_id)
+) ENGINE = InnoDB; 
+
 -- ZMG Devices
 CREATE TABLE zmg_devices (
    mailbox_id          INTEGER UNSIGNED NOT NULL,
