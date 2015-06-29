@@ -266,7 +266,10 @@ CREATE TABLE zmg_devices (
    device_id           VARCHAR(64) NOT NULL,
    reg_id              VARCHAR(255) NOT NULL,
    push_provider       VARCHAR(8) NOT NULL,
-   
+   os_name             VARCHAR(16),
+   os_version          VARCHAR(8),
+   max_payload_size    INTEGER UNSIGNED,
+
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_zmg_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_mailbox_id (mailbox_id)
