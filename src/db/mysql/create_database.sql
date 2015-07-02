@@ -285,7 +285,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_conversations (
    data_source_id CHAR(36) NOT NULL,
    item_id        INTEGER UNSIGNED NOT NULL,
    hash           CHAR(28) BINARY NOT NULL,
-   
+
    PRIMARY KEY (mailbox_id, data_source_id, hash),
    CONSTRAINT fk_purged_conversation_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
@@ -301,4 +301,17 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_messages (
 
    PRIMARY KEY (mailbox_id, data_source_id, item_id),
    CONSTRAINT fk_purged_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.dav_name (
+   mailbox_id       INTEGER UNSIGNED NOT NULL,
+   item_id          INTEGER UNSIGNED NOT NULL,
+   folder_id        INTEGER UNSIGNED NOT NULL,
+   dav_base_name    VARCHAR(255) NOT NULL,
+
+   PRIMARY KEY (mailbox_id, item_id),
+   UNIQUE INDEX i_folder_id_dav_base_name (mailbox_id, folder_id, dav_base_name),   -- for namespace uniqueness
+   CONSTRAINT fk_dav_name_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE,
+   CONSTRAINT fk_dav_name_item_id FOREIGN KEY (mailbox_id, item_id)
+      REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
