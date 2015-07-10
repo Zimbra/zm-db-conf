@@ -22,21 +22,7 @@ use Migrate;
 
 Migrate::verifySchemaVersion(105);
 
-addDeviceInformationColumns();
-
 Migrate::updateSchemaVersion(105, 106);
 
 exit(0);
 
-#####################
-
-sub addDeviceInformationColumns() {
-    my $sql = <<ZMG_DEVICES_ADD_COLUMN_EOF;
-ALTER TABLE zmg_devices ADD COLUMN os_name VARCHAR(16);
-ALTER TABLE zmg_devices ADD COLUMN os_version VARCHAR(8);
-ALTER TABLE zmg_devices ADD COLUMN max_payload_size INTEGER UNSIGNED;
-ZMG_DEVICES_ADD_COLUMN_EOF
-    
-    Migrate::log("Adding OS information columns to ZIMBRA.ZMG_DEVICES table.");
-    Migrate::runSql($sql);
-}
