@@ -22,21 +22,6 @@ use Migrate;
 
 Migrate::verifySchemaVersion(103);
 
-my $sqlStmt = <<_SQL_;
-CREATE TABLE IF NOT EXISTS zmg_devices (
-   mailbox_id          INTEGER UNSIGNED NOT NULL,
-   device_id           VARCHAR(64) NOT NULL,
-   reg_id              VARCHAR(255) NOT NULL,
-   push_provider       VARCHAR(8) NOT NULL,
-   
-   PRIMARY KEY (mailbox_id, device_id),
-   CONSTRAINT fk_zmg_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
-   INDEX i_mailbox_id (mailbox_id)
-) ENGINE = InnoDB;
-_SQL_
-
-Migrate::runSql($sqlStmt);
-
 Migrate::updateSchemaVersion(103, 104);
 
 exit(0);
