@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    prev_folders  TEXT,                       -- e.g. "101:2;110:5", before mod_metadata 101, this item was in folder 2, before 110, it was in 5
    index_id      INTEGER UNSIGNED,
    imap_id       INTEGER UNSIGNED,
-   date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
+   date          BIGINT UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
    locator       VARCHAR(1024),
    blob_digest   VARCHAR(44) BINARY,         -- reference to blob
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
    name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
-   change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
+   change_date   BIGINT UNSIGNED,           -- UNIX-style timestamp for last row modification
    mod_content   INTEGER UNSIGNED NOT NULL,  -- change number for last change to "content" (e.g. blob)
    uuid          VARCHAR(127),               -- e.g. "d94e42c4-1636-11d9-b904-4dd689d02402"
 
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    prev_folders  TEXT,                       -- e.g. "101:2;110:5", before mod_metadata 101, this item was in folder 2, before 110, it was in 5
    index_id      INTEGER UNSIGNED,
    imap_id       INTEGER UNSIGNED,
-   date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
+   date          BIGINT UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
    locator       VARCHAR(1024),
    blob_digest   VARCHAR(44) BINARY,         -- reference to blob
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
-   change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
+   change_date   BIGINT UNSIGNED,           -- UNIX-style timestamp for last row modification
    mod_content   INTEGER UNSIGNED NOT NULL,  -- change number for last change to "content" (e.g. blob)
    uuid          VARCHAR(127),               -- e.g. "d94e42c4-1636-11d9-b904-4dd689d02402"
 
@@ -105,14 +105,14 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision (
    mailbox_id    INTEGER UNSIGNED NOT NULL,
    item_id       INTEGER UNSIGNED NOT NULL,
    version       INTEGER UNSIGNED NOT NULL,
-   date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
+   date          BIGINT UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
    locator       VARCHAR(1024),
    blob_digest   VARCHAR(44) BINARY,         -- reference to blob
    name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
-   change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
+   change_date   BIGINT UNSIGNED,           -- UNIX-style timestamp for last row modification
    mod_content   INTEGER UNSIGNED NOT NULL,  -- change number for last change to "content" (e.g. blob)
 
    PRIMARY KEY (mailbox_id, item_id, version),
@@ -125,14 +125,14 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision_dumpster (
    mailbox_id    INTEGER UNSIGNED NOT NULL,
    item_id       INTEGER UNSIGNED NOT NULL,
    version       INTEGER UNSIGNED NOT NULL,
-   date          INTEGER UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
+   date          BIGINT UNSIGNED NOT NULL,  -- stored as a UNIX-style timestamp
    size          BIGINT UNSIGNED NOT NULL,
    locator       VARCHAR(1024),
    blob_digest   VARCHAR(44) BINARY,         -- reference to blob
    name          VARCHAR(255),               -- namespace entry for item (e.g. tag name, folder name, document filename)
    metadata      MEDIUMTEXT,
    mod_metadata  INTEGER UNSIGNED NOT NULL,  -- change number for last row modification
-   change_date   INTEGER UNSIGNED,           -- UNIX-style timestamp for last row modification
+   change_date   BIGINT UNSIGNED,           -- UNIX-style timestamp for last row modification
    mod_content   INTEGER UNSIGNED NOT NULL,  -- change number for last change to "content" (e.g. blob)
 
    PRIMARY KEY (mailbox_id, item_id, version),
@@ -209,7 +209,7 @@ CREATE UNIQUE INDEX i_item_id ON ${DATABASE_NAME}.appointment_dumpster (mailbox_
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tombstone (
    mailbox_id  INTEGER UNSIGNED NOT NULL,
    sequence    INTEGER UNSIGNED NOT NULL,  -- change number for deletion
-   date        INTEGER UNSIGNED NOT NULL,  -- deletion date as a UNIX-style timestamp
+   date        BIGINT UNSIGNED NOT NULL,  -- deletion date as a UNIX-style timestamp
    type        TINYINT,                    -- 1 = folder, 3 = tag, etc.
    ids         TEXT,
 
@@ -285,7 +285,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_conversations (
    data_source_id CHAR(36) NOT NULL,
    item_id        INTEGER UNSIGNED NOT NULL,
    hash           CHAR(28) BINARY NOT NULL,
-   
+
    PRIMARY KEY (mailbox_id, data_source_id, hash),
    CONSTRAINT fk_purged_conversation_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
@@ -301,4 +301,17 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_messages (
 
    PRIMARY KEY (mailbox_id, data_source_id, item_id),
    CONSTRAINT fk_purged_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.dav_name (
+   mailbox_id       INTEGER UNSIGNED NOT NULL,
+   item_id          INTEGER UNSIGNED NOT NULL,
+   folder_id        INTEGER UNSIGNED NOT NULL,
+   dav_base_name    VARCHAR(255) NOT NULL,
+
+   PRIMARY KEY (mailbox_id, item_id),
+   UNIQUE INDEX i_folder_id_dav_base_name (mailbox_id, folder_id, dav_base_name),   -- for namespace uniqueness
+   CONSTRAINT fk_dav_name_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE,
+   CONSTRAINT fk_dav_name_item_id FOREIGN KEY (mailbox_id, item_id)
+      REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
