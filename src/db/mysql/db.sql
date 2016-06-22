@@ -1,17 +1,17 @@
 --
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 Zimbra, Inc.
--- 
+-- Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Synacor, Inc.
+--
 -- This program is free software: you can redistribute it and/or modify it under
 -- the terms of the GNU General Public License as published by the Free Software Foundation,
 -- version 2 of the License.
--- 
+--
 -- This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 -- without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 -- See the GNU General Public License for more details.
 -- You should have received a copy of the GNU General Public License along with this program.
--- If not, see <http://www.gnu.org/licenses/>.
+-- If not, see <https://www.gnu.org/licenses/>.
 -- ***** END LICENSE BLOCK *****
 --
 CREATE DATABASE zimbra;
@@ -259,6 +259,12 @@ CREATE TABLE pending_acl_push (
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_date (date)
 ) ENGINE = InnoDB;
+
+CREATE TABLE current_sessions (
+	id				INTEGER UNSIGNED NOT NULL,
+	server_id		VARCHAR(127) NOT NULL,
+	PRIMARY KEY (id, server_id)
+) ENGINE = InnoDB; 
 
 -- ZMG Devices
 CREATE TABLE zmg_devices (
