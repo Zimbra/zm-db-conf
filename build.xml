@@ -1,0 +1,64 @@
+<project name="Zimbra Db Setup" default="sql-dist">
+
+        <import file="../zm-zcs/ant-global.xml" />
+        <property name="db.schema.dir" value="src/db/mysql" />
+        <property name="dist.db.dir" value="build/dist/db" />
+        <property name="build.dir" location="build" />
+        <mkdir dir="${build.dir}"/>
+
+        <!-- Properties -->
+
+        <target name="choose-db-schema">
+                <condition property="db.schema.dir" value="src/db/sqlite">
+                        <isset property="db-sqlite" />
+                </condition>
+                <condition property="db.schema.dir" value="src/db/mysql">
+                        <isset property="db-mysql" />
+                </condition>
+                <echo>Using database schema in ${db.schema.dir}</echo>
+        </target>
+
+        <target name="db-init" depends="choose-db-schema,mysql-init,sqlite-init">
+                <mkdir dir="${build.classes.dir}" />
+        </target>
+
+        <target name="mysql-init" if="db-mysql">
+                <sql driver="org.mariadb.jdbc.Driver" url="jdbc:mysql://127.0.0.1:7306/" userid="root" password="zimbra" classpathref="class.path" onerror="continue" src="${db.schema.dir}/dropdb.sql" print="false" />
+                <sql driver="org.mariadb.jdbc.Driver" url="jdbc:mysql://127.0.0.1:7306/" userid="root" password="zimbra" classpathref="class.path" onerror="abort" src="${db.schema.dir}/db.sql" />
+                <sql driver="org.mariadb.jdbc.Driver" url="jdbc:mysql://127.0.0.1:7306/" userid="root" password="zimbra" classpathref="class.path" onerror="abort" src="${build.dir}/versions-init.sql" />
+        </target>
+
+        <target name="sqlite-init" if="db-sqlite">
+                <delete dir="${zimbra.sqlite.dir}" />
+                <mkdir dir="${zimbra.sqlite.dir}" />
+                <exec executable="sqlite3" dir="${zimbra.sqlite.dir}" failonerror="true" input="${dist.db.dir}/init.sql">
+                        <arg line="zimbra.db" />
+                </exec>
+
+        </target>
+
+        <!-- db schema, sql -->
+        <target name="sql-dist" depends="choose-db-schema">
+                <antcall target="db-versions-init" />
+                <copy todir="${dist.db.dir}" overwrite="true">
+                        <fileset dir="${src.dir}/db" includes="*.sql" />
+                        <fileset dir="${db.schema.dir}" includes="*.sql" />
+                        <fileset dir="${build.dir}" includes="*.sql" />
+                </copy>
+                <zip destfile="build/zm-db-conf.zip" basedir="${dist.db.dir}" />
+        </target>
+        <target name="mysql-versions-init" if="db-mysql">
+                <java classname="com.zimbra.cs.db.MariaDB" fork="true" classpathref="class.path" failonerror="true">
+                        <arg line="-o ${build.dir}" />
+                </java>
+        </target>
+
+        <target name="sqlite-versions-init" if="db-sqlite">
+                <java classname="com.zimbra.cs.db.SQLite" fork="true" classpathref="class.path" failonerror="true">
+                        <arg line="-o ${build.dir}" />
+                </java>
+        </target>
+
+        <target name="db-versions-init" depends="mysql-versions-init,sqlite-versions-init" />
+</project>
+
