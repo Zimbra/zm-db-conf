@@ -2,8 +2,9 @@
 
 - `./ZimbraServer/src/db/mysql`
 - `./ZimbraServer/src/db/migration`
-- `.Zimbraserver/src/db/sqlite`
-- `.ZimbraServer/src/db/mysql-cluster`
+- `./Zimbraserver/src/db/sqlite`
+- `./ZimbraServer/src/db/mysql-cluster`
+- `./ZimbraServer/src/db/default-volumes.sql`
 
 
 
