@@ -1,4 +1,4 @@
-<project name="Zimbra Db Setup" default="sql-dist">
+<project name="zm-db-conf" default="sql-dist">
 
         <import file="../zm-zcs/ant-global.xml" />
         <property name="db.schema.dir" value="src/db/mysql" />
