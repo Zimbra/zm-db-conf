@@ -302,3 +302,28 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_messages (
    PRIMARY KEY (mailbox_id, data_source_id, item_id),
    CONSTRAINT fk_purged_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+
+-- Support for xextras openchat
+CREATE DATABASE IF NOT EXISTS `chat`;
+CREATE TABLE IF NOT EXISTS chat.`USER` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `ADDRESS` varchar(256) NOT NULL,
+  PRIMARY KEY (`ID`)
+);
+CREATE TABLE IF NOT EXISTS chat.`RELATIONSHIP` (
+  `USERID` int(11) NOT NULL,
+  `TYPE` tinyint(4) NOT NULL,
+  `BUDDYADDRESS` varchar(256) NOT NULL,
+  `BUDDYNICKNAME` varchar(128) NOT NULL,
+  `GROUP` varchar(256) NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS chat.`EVENTMESSAGE` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `USERID` int(11) NOT NULL,
+  `EVENTID` varchar(36) DEFAULT NULL,
+  `SENDER` varchar(256) NOT NULL,
+  `TIMESTAMP` bigint(20) DEFAULT NULL,
+  `MESSAGE` text,
+  PRIMARY KEY (`ID`)
+);
