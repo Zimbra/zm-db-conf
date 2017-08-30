@@ -331,3 +331,27 @@ CREATE TABLE IF NOT EXISTS chat.`EVENTMESSAGE` (
   `MESSAGE` text,
   PRIMARY KEY (`ID`)
 ) ENGINE = InnoDB;
+
+
+-- Search History
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.searches (
+   mailbox_id       INTEGER UNSIGNED NOT NULL,
+   id               INTEGER UNSIGNED NOT NULL, -- ID of the query string
+   search           VARCHAR(255), -- the search query string
+   status           TINYINT NOT NULL DEFAULT 0, -- status of the saved search prompt
+   last_search_date DATETIME, -- timestamp of the last time this was searched
+
+   PRIMARY KEY (mailbox_id, id),
+   INDEX i_search (mailbox_id, search), -- for checking existence
+   CONSTRAINT fk_searches_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS $DATABASE_NAME}.search_history (
+   mailbox_id    INTEGER UNSIGNED NOT NULL,
+   search_id     INTEGER UNSIGNED NOT NULL,
+   date          DATETIME NOT NULL,
+
+   CONSTRAINT fk_search_history_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE,
+   CONSTRAINT fk_search_id FOREIGN KEY (mailbox_id, search_id) REFERENCES ${DATABASE_NAME}.searches(mailbox_id, id) ON DELETE CASCADE
+) ENGINE = InnoDB;
