@@ -1,7 +1,7 @@
 --
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Synacor, Inc.
+-- Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 Synacor, Inc.
 --
 -- This program is free software: you can redistribute it and/or modify it under
 -- the terms of the GNU General Public License as published by the Free Software Foundation,
@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.searches (
    CONSTRAINT fk_searches_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS $DATABASE_NAME}.search_history (
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.search_history (
    mailbox_id    INTEGER UNSIGNED NOT NULL,
    search_id     INTEGER UNSIGNED NOT NULL,
    date          DATETIME NOT NULL,
