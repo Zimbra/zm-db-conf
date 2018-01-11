@@ -283,3 +283,11 @@ CREATE TABLE zmg_devices (
    INDEX i_mailbox_id (mailbox_id),
    INDEX i_reg_id (reg_id)
 ) ENGINE = InnoDB;
+
+-- Redolog Operations
+CREATE TABLE IF NOT EXISTS distributed_redolog
+( 
+  opOrder BIGINT PRIMARY KEY AUTO_INCREMENT,
+  opType CHAR(2) DEFAULT 'OP' CHECK (opType IN ('OP', 'HD')) ,
+  op LONGBLOB NOT NULL
+) ENGINE = InnoDB;
