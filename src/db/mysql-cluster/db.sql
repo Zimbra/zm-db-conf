@@ -267,3 +267,10 @@ CREATE TABLE current_sessions (
 	PRIMARY KEY (id, server_id)
 ) ENGINE = NDBCLUSTER; 
 
+-- Redolog Operations
+CREATE TABLE IF NOT EXISTS distributed_redolog
+( 
+  opOrder BIGINT PRIMARY KEY AUTO_INCREMENT,
+  opType CHAR(2) DEFAULT 'OP' CHECK (opType IN ('OP', 'HD')) ,
+  op LONGBLOB NOT NULL
+) ENGINE = InnoDB;
