@@ -21,9 +21,9 @@ use strict;
 use Migrate;
 my $concurrent = 10;
 
-Migrate::verifySchemaVersion(109);
+Migrate::verifySchemaVersion(110);
 createDistributedRedologTable();
-Migrate::updateSchemaVersion(109, 110);
+Migrate::updateSchemaVersion(110, 111);
 exit(0);
 
 #####################
