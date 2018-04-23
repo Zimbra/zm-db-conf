@@ -21,10 +21,10 @@ use strict;
 use Migrate;
 my $concurrent = 10;
 
-Migrate::verifySchemaVersion(108);
+Migrate::verifySchemaVersion(109);
 createSearchHistoryTables();
 addSearchIdCheckpointColumn();
-Migrate::updateSchemaVersion(108, 109);
+Migrate::updateSchemaVersion(109, 110);
 exit(0);
 
 #####################
