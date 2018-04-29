@@ -68,10 +68,14 @@ _SQL_
 }
 
 sub addSearchIdCheckpointColumn($) {
-  my @sql = ();
-  my $sql = <<_SQL_;
+  my @colCountRes = Migrate::runSql("SELECT count(*) from information_schema.columns where table_schema='zimbra' and table_name='mailbox' and column_name='search_id_checkpoint'");
+  my $colCount = @colCountRes[0];
+  if ($colCount == 0) {
+    my @sql = ();
+    my $sql = <<_SQL_;
 ALTER TABLE zimbra.mailbox
 ADD COLUMN search_id_checkpoint INTEGER DEFAULT 0 NOT NULL AFTER itemcache_checkpoint;
 _SQL_
-  Migrate::runSql($sql);
+    Migrate::runSql($sql);
+  }
 }
