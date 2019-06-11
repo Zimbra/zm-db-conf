@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+#
+# ***** BEGIN LICENSE BLOCK *****
+# Zimbra Collaboration Suite Server
+# Copyright (C) 2015, 2016 Synacor, Inc.
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software Foundation,
+# version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+# ***** END LICENSE BLOCK *****
+#
+
+use strict;
+use Migrate;
+
+Migrate::verifySchemaVersion(109);
+
+my $sqlStmt = <<_SQL_;
+ALTER TABLE chat.`GROUP` ADD `IMAGE` MEDIUMBLOB DEFAULT NULL;
+ALTER TABLE chat.`GROUP` ADD `IMAGE_UPDATE` BIGINT DEFAULT NULL;
+ALTER TABLE chat.`SPACE` ADD `NAME` VARCHAR(256) DEFAULT '' NOT NULL;
+
+CREATE TABLE `chat`.`USERV3` (
+  `ID`             VARCHAR(256) NOT NULL,
+  `LAST_SEEN`      BIGINT       DEFAULT NULL,
+  `STATUS_MESSAGE` VARCHAR(256) DEFAULT '' NOT NULL,
+  `IMAGE`          MEDIUMBLOB   DEFAULT NULL,
+  `IMAGE_UPDATE`   BIGINT       DEFAULT NULL
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_USERV3` ON `chat`.`USERV3` (`ID`);
+
+CREATE TABLE `chat`.`FIREBASE` (
+  `TOKEN`       VARCHAR(256) NOT NULL,
+  `ACCOUNT_ID`  VARCHAR(256) NOT NULL,
+  `API_VERSION` INTEGER NOT NULL
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_FIREBASE` ON `chat`.`FIREBASE` (`TOKEN`);
+
+CREATE TABLE `chat`.`USER_ROOM_JOIN` (
+  `ACCOUNT_ID`    VARCHAR(256) NOT NULL,
+  `ROOM_ADDRESS`  VARCHAR(256) NOT NULL
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_USER_ROOM_JOIN` ON `chat`.`USER_ROOM_JOIN` (`ACCOUNT_ID`, `ROOM_ADDRESS`);
+
+CREATE TABLE `chat`.`CHANNELV3` (
+  `ADDRESS`        VARCHAR(256) NOT NULL,
+  `SPACE_ID`       VARCHAR(256) NOT NULL,
+  `NAME`           VARCHAR(128) NOT NULL,
+  `TOPIC`          VARCHAR(256),
+  `IS_INVITE_ONLY` BOOLEAN DEFAULT FALSE,
+  `IMAGE`          MEDIUMBLOB DEFAULT NULL,
+  `IMAGE_UPDATE`   BIGINT DEFAULT NULL
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_CHANNELV3_ADDRESS` ON `chat`.`CHANNELV3` (`ADDRESS`);
+CREATE INDEX `INDEX_CHANNELV3_SPACE_ID` ON `chat`.`CHANNELV3` (`SPACE_ID`);
+
+CREATE TABLE `chat`.`VISIBILITY` (
+  `ADDRESS`         VARCHAR(256) NOT NULL,
+  `ACCOUNT_ID`      VARCHAR(256) NOT NULL,
+  `START_TIMESTAMP` BIGINT       NOT NULL
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_VISIBILITY` ON `chat`.`VISIBILITY` (`ACCOUNT_ID`,`ADDRESS`);
+CREATE INDEX `INDEX_VISIBILITY_ADDRESS` ON `chat`.`VISIBILITY` (`ADDRESS`);
+
+CREATE TABLE `chat`.`INSTANT_MEETING` (
+  `ADDRESS`   VARCHAR(256) NOT NULL,
+  `NAME`      VARCHAR(256),
+  `PASSWORD`  VARCHAR(256)
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_INSTANT_MEETING` ON `chat`.`INSTANT_MEETING` (`ADDRESS`);
+
+CREATE TABLE `chat`.`CONVERSATION_OPTIONS` (
+  `ACCOUNT_ID`      VARCHAR(256) NOT NULL,
+  `ADDRESS`         VARCHAR(256) NOT NULL,
+  `NOTIFICATIONS`   BOOLEAN DEFAULT TRUE
+) ENGINE = InnoDB;
+CREATE INDEX `INDEX_CONVERSATION_OPTIONS` ON `chat`.`CONVERSATION_OPTIONS` (`ACCOUNT_ID`,`ADDRESS`);
+CREATE INDEX `INDEX_CONVERSATION_OPTIONS_ACCOUNT_ID` ON `chat`.`CONVERSATION_OPTIONS` (`ACCOUNT_ID`);
+CREATE INDEX `INDEX_CONVERSATION_OPTIONS_ADDRESS` ON `chat`.`CONVERSATION_OPTIONS` (`ADDRESS`);
+_SQL_
+
+Migrate::runSql($sqlStmt);
+
+Migrate::updateSchemaVersion(109, 110);
+
+exit(0);
