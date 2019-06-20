@@ -19,7 +19,7 @@
 use strict;
 use Migrate;
 
-Migrate::verifySchemaVersion(109);
+Migrate::verifySchemaVersion(110);
 
 my $sqlStmt = <<_SQL_;
 ALTER TABLE chat.`GROUP` ADD `IMAGE` MEDIUMBLOB DEFAULT NULL;
@@ -88,6 +88,6 @@ _SQL_
 
 Migrate::runSql($sqlStmt);
 
-Migrate::updateSchemaVersion(109, 110);
+Migrate::updateSchemaVersion(110, 111);
 
 exit(0);
