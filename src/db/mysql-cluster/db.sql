@@ -183,6 +183,15 @@ CREATE TABLE config (
    modified     TIMESTAMP
 ) ENGINE = NDBCLUSTER;
 
+INSERT INTO config (name, value, description, modified)
+  VALUES ('abq_mode', 'disabled', 'Whether ABQ mode is on/off', CURRENT_TIMESTAMP);
+INSERT INTO config (name, description, modified)
+  VALUES ('abq_admin_email_list', 'ABQ admin email list', CURRENT_TIMESTAMP);
+INSERT INTO config (name, value, description, modified)
+  VALUES ('abq_notification_interval', '8h', 'ABQ notification interval', CURRENT_TIMESTAMP);
+INSERT INTO config (name, description, modified)
+  VALUES ('abq_last_notification_time', 'ABQ last notification time', CURRENT_TIMESTAMP);
+
 -- table for tracking database table maintenance
 CREATE TABLE table_maintenance (
    database_name       VARCHAR(64) NOT NULL,
@@ -245,6 +254,7 @@ CREATE TABLE mobile_devices (
    approved_appl_list   TEXT NULL,
    
    PRIMARY KEY (mailbox_id, device_id),
+   INDEX i_device_id (device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_last_used_date (last_used_date)
 ) ENGINE = NDBCLUSTER;
@@ -266,3 +276,16 @@ CREATE TABLE current_sessions (
 	PRIMARY KEY (id, server_id)
 ) ENGINE = NDBCLUSTER; 
 
+CREATE TABLE abq_devices (
+   device_id       VARCHAR(64) NOT NULL,
+   account_id      VARCHAR(127) NOT NULL,
+   status          VARCHAR(64),
+   created_time    DATETIME,
+   created_by      VARCHAR(255),
+   modified_time   DATETIME,
+   modified_by     VARCHAR(255),
+
+   CONSTRAINT pk_abq_devices PRIMARY KEY (device_id, account_id),
+   CONSTRAINT fk_abq_devices_device_id FOREIGN KEY (device_id) REFERENCES mobile_devices(device_id) ON DELETE CASCADE,
+   CONSTRAINT fk_abq_devices_account_id FOREIGN KEY (account_id) REFERENCES mailbox(account_id) ON DELETE CASCADE
+) ENGINE = NDBCLUSTER;
