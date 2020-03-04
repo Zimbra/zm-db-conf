@@ -34,7 +34,7 @@ INSERT INTO zimbra.`CONFIG` (name, description, modified)
   
 CREATE INDEX i_device_id ON mobile_devices (device_id);
   
-CREATE TABLE zimbra.abq_devices (
+CREATE TABLE IF NOT EXISTS zimbra.abq_devices (
    device_id       VARCHAR(64) NOT NULL,
    account_id      VARCHAR(127),
    status          ENUM('allowed', 'quarantined', 'blocked'),
