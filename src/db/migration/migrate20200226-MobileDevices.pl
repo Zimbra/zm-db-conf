@@ -35,6 +35,7 @@ INSERT INTO zimbra.`CONFIG` (name, description, modified)
 CREATE INDEX i_device_id ON mobile_devices (device_id);
   
 CREATE TABLE IF NOT EXISTS zimbra.abq_devices (
+   id              INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
    device_id       VARCHAR(64) NOT NULL,
    account_id      VARCHAR(127),
    status          ENUM('allowed', 'quarantined', 'blocked'),
@@ -43,9 +44,13 @@ CREATE TABLE IF NOT EXISTS zimbra.abq_devices (
    modified_time   DATETIME,
    modified_by     VARCHAR(255),
 
-   CONSTRAINT pk_abq_devices PRIMARY KEY (device_id),
+   CONSTRAINT pk_abq_devices PRIMARY KEY (id),
    CONSTRAINT fk_abq_devices_device_id FOREIGN KEY (device_id) REFERENCES mobile_devices(device_id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+CREATE INDEX i_device_id ON abq_devices(device_id);
+CREATE INDEX i_account_id ON abq_devices(account_id);
+CREATE INDEX i_status ON abq_devices(status);
 
 _SQL_
 
