@@ -243,6 +243,7 @@ CREATE TABLE mobile_devices (
    phone_number        VARCHAR(64),
    unapproved_appl_list TEXT NULL,
    approved_appl_list   TEXT NULL,
+   last_updated_by   VARCHAR(64),
    
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
