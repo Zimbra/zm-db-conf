@@ -20,11 +20,11 @@
 use strict;
 use Migrate;
 
-Migrate::verifySchemaVersion(117);
+Migrate::verifySchemaVersion(113);
 
 addLastUpdatedByColumn();
 
-Migrate::updateSchemaVersion(117, 118);
+Migrate::updateSchemaVersion(113, 114);
 
 exit(0);
 
