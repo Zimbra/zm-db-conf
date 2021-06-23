@@ -20,11 +20,11 @@
 use strict;
 use Migrate;
 
-Migrate::verifySchemaVersion(115);
+Migrate::verifySchemaVersion(112);
 
 addMobileOperatorColumn();
 
-Migrate::updateSchemaVersion(115, 116);
+Migrate::updateSchemaVersion(112, 113);
 
 exit(0);
 
