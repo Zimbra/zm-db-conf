@@ -28,7 +28,7 @@ sub bumpUpMailboxChangeCheckpoints();
 
 my $CONCURRENCY = 10;
 my $ID = 19;
-my $METADATA = 'd1:ai1e4:mseqi1e4:unxti20e1:vi10e2:vti5ee';
+my $METADATA = 'd1:ai1e3:das5:false4:mseqi1e4:unxti20e1:vi10e2:vti5ee';
 my $NOW = time();
 my $FOLDERNAME = 'Unsubscribe';
 
@@ -69,7 +69,7 @@ _SQL_
     Migrate::runSql($sql);
 }
 
-# Create the system Briefcase folder for each mailbox in the specified
+# Create the system Unsubscribe folder for each mailbox in the specified
 # mailbox group.
 sub createFolder($) {
     my $gid = shift;
@@ -77,14 +77,14 @@ sub createFolder($) {
     my $sql = <<_SQL_;
 INSERT INTO mboxgroup$gid.mail_item (
     mailbox_id, id, type, parent_id, folder_id, index_id, imap_id,
-    date, size, volume_id, blob_digest,
+    date, size, blob_digest,
     unread, flags, tags, sender,
     subject, name, metadata,
     mod_metadata, change_date, mod_content
 )
 SELECT
     id, $ID, 1, 1, 1, null, null,
-    $NOW, 0, null, null,
+    $NOW, 0, null,
     0, 0, 0, null,
     '$FOLDERNAME', '$FOLDERNAME', '$METADATA',
     change_checkpoint, $NOW, change_checkpoint
@@ -99,7 +99,7 @@ _SQL_
 __END__
 
 
-Metadata:  "d1:ai1e4:mseqi1e4:unxti20e1:vi10e2:vti5ee"
+Metadata:  "d1:ai1e3:das5:false4:mseqi1e4:unxti20e1:vi10e2:vti5ee"
 
 d #map
 
