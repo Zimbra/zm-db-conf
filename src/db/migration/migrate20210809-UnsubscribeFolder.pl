@@ -32,8 +32,6 @@ my $METADATA = 'd1:ai1e3:das5:false4:mseqi1e4:unxti20e1:vi10e2:vti5ee';
 my $NOW = time();
 my $FOLDERNAME = 'Unsubscribe';
 
-Migrate::verifySchemaVersion(114);
-
 bumpUpMailboxChangeCheckpoints();
 
 my @sqlRename;
