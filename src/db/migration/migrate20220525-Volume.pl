@@ -87,8 +87,7 @@ sub updateStoreTypeColumn() {
             my $sth = $dbh->prepare ($sql);
             $sth->execute();
             $sth->finish();
-        }
-        else {
+        } else {
             # Migrate::log("varBool not equals 1");
         }
     }
