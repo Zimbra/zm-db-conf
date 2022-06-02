@@ -2,7 +2,7 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2005, 2007, 2008, 2009, 2010, 2013, 2014, 2016 Synacor, Inc.
+# Copyright (C) 2022 Synacor, Inc.
 #
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software Foundation,
@@ -39,13 +39,13 @@ if ($^O !~ /MSWin/i) {
 }
 
 # Verify Schema Version Number
-Migrate::verifySchemaVersion(111);
+Migrate::verifySchemaVersion(114);
 
 addStoreTypeColumn();
 updateStoreTypeColumn();
 
 # Update Schema Version Number
-Migrate::updateSchemaVersion(111, 112);
+Migrate::updateSchemaVersion(114, 115);
 
 exit(0);
 
@@ -76,21 +76,19 @@ sub updateStoreTypeColumn() {
     $sth->execute();
 
     # print 'path' column from table volume
-    while(my @row = $sth->fetchrow_array()) {
+    while (my @row = $sth->fetchrow_array()) {
        printf("%s\t\n",$row[0]);
        my $varBool = $PREFIX eq substr($row[0],0,length($PREFIX));
        # printf(" --> do drive starts with prefix ? [%s]\n",$varBool);
 
-        if($varBool eq 1)
-        {
+        if ($varBool eq 1) {
             # Migrate::log("varBool equals 1");
             my $sql = "UPDATE volume SET store_type=2 WHERE path='$row[0]'";
             my $sth = $dbh->prepare ($sql);
             $sth->execute();
             $sth->finish();
         }
-        else
-        {
+        else {
             # Migrate::log("varBool not equals 1");
         }
     }
