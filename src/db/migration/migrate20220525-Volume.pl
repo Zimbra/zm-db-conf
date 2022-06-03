@@ -77,9 +77,9 @@ sub updateStoreTypeColumn() {
 
     # print 'path' column from table volume
     while (my @row = $sth->fetchrow_array()) {
-       printf("%s\t\n",$row[0]);
-       my $varBool = $PREFIX eq substr($row[0],0,length($PREFIX));
-       # printf(" --> do drive starts with prefix ? [%s]\n",$varBool);
+        printf("%s\t\n",$row[0]);
+        my $varBool = $PREFIX eq substr($row[0],0,length($PREFIX));
+        # printf(" --> do drive starts with prefix ? [%s]\n",$varBool);
 
         if ($varBool eq 1) {
             # Migrate::log("varBool equals 1");
