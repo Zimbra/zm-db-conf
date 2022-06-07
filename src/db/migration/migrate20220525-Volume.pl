@@ -79,7 +79,6 @@ sub updateStoreTypeColumn() {
     while (my @row = $sth->fetchrow_array()) {
         printf("%s\t\n",$row[0]);
         my $varBool = $PREFIX eq substr($row[0],0,length($PREFIX));
-        # printf(" --> do drive starts with prefix ? [%s]\n",$varBool);
 
         if ($varBool eq 1) {
             # Migrate::log("varBool equals 1");
@@ -87,8 +86,6 @@ sub updateStoreTypeColumn() {
             my $sth = $dbh->prepare ($sql);
             $sth->execute();
             $sth->finish();
-        } else {
-            # Migrate::log("varBool not equals 1");
         }
     }
 
