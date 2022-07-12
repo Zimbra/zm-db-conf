@@ -50,6 +50,7 @@ CREATE TABLE volume (
    compress_blobs         BOOLEAN NOT NULL,
    compression_threshold  BIGINT NOT NULL,
    metadata               MEDIUMTEXT,
+   store_type             TINYINT(1) NOT NULL DEFAULT 1, -- 1 for onstore and 2 for s3 bucket
 
    UNIQUE INDEX i_name (name),
    UNIQUE INDEX i_path (path(255))   -- Index prefix length of 255 is the max prior to MySQL 4.1.2.  Should be good enough.
