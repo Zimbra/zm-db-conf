@@ -91,9 +91,9 @@ create table volume_blobs (
   revision INTEGER NOT NULL,
   blob_digest VARCHAR(44),
   processed BOOLEAN default false,
-
+  
   INDEX i_blob_digest (blob_digest),
-
+  
   CONSTRAINT uc_blobinfo UNIQUE (volume_id,mailbox_id,item_id,revision)
   -- FK constraints disabled for now; maybe enable them in 9.0 when we have time to deal with delete cases
   -- CONSTRAINT fk_volume_blobs_volume_id FOREIGN KEY (volume_id) REFERENCES volume(id),
@@ -246,7 +246,7 @@ CREATE TABLE mobile_devices (
    approved_appl_list   TEXT NULL,
    mobile_operator      VARCHAR(512),
    last_updated_by     ENUM('Admin','User') DEFAULT 'Admin',
-
+   
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_last_used_date (last_used_date)
@@ -261,7 +261,7 @@ CREATE TABLE pending_acl_push (
    PRIMARY KEY (mailbox_id, item_id, date),
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_date (date)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB; 
 
 CREATE TABLE current_sessions (
 	id				INTEGER UNSIGNED NOT NULL,
