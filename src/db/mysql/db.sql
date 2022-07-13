@@ -261,13 +261,13 @@ CREATE TABLE pending_acl_push (
    PRIMARY KEY (mailbox_id, item_id, date),
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
    INDEX i_date (date)
-) ENGINE = InnoDB; 
+) ENGINE = InnoDB;
 
 CREATE TABLE current_sessions (
 	id				INTEGER UNSIGNED NOT NULL,
 	server_id		VARCHAR(127) NOT NULL,
 	PRIMARY KEY (id, server_id)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB; 
 
 -- ZMG Devices
 CREATE TABLE zmg_devices (
