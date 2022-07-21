@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# 
+#
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
 # Copyright (C) 2022 Synacor, Inc.
@@ -43,6 +43,7 @@ Migrate::verifySchemaVersion(114);
 
 addStoreTypeColumn();
 updateStoreTypeColumn();
+addStoreManagerClassColumn();
 
 # Update Schema Version Number
 Migrate::updateSchemaVersion(114, 115);
@@ -59,6 +60,16 @@ VOLUME_ADD_COLUMN_EOF
     Migrate::runSql($sql);
 }
 
+# Function to add 'store_manager_class' column
+sub addStoreManagerClassColumn() {
+    my $sql = <<VOLUME_ADD_COLUMN_EOF;
+ALTER TABLE volume ADD COLUMN IF NOT EXISTS store_manager_class VARCHAR(255) DEFAULT NULL;
+VOLUME_ADD_COLUMN_EOF
+
+    Migrate::log("Adding store_manager_class column to zimbra.volume table.");
+    Migrate::runSql($sql);
+}
+
 # Function to check the path of added volume contains 'S3-' or not
 sub updateStoreTypeColumn() {
 
@@ -66,7 +77,7 @@ sub updateStoreTypeColumn() {
     my $data_source = "dbi:mysql:database=$DATABASE;mysql_read_default_file=/opt/zimbra/conf/my.cnf;mysql_socket=$DB_SOCKET";
     my $dbh;
     until ($dbh) {
-        $dbh = DBI->connect($data_source, $DB_USER, $DB_PASSWORD, { PrintError => 0 }); 
+        $dbh = DBI->connect($data_source, $DB_USER, $DB_PASSWORD, { PrintError => 0 });
         sleep 1;
     }
 

@@ -51,6 +51,7 @@ CREATE TABLE volume (
    compression_threshold  BIGINT NOT NULL,
    metadata               MEDIUMTEXT,
    store_type             TINYINT(1) NOT NULL DEFAULT 1, -- 1 for INTERNAL(onstore) and 2 for EXTERNAL(s3 bucket, OPENIO)
+   store_manager_class    VARCHAR(255) DEFAULT NULL,
 
    UNIQUE INDEX i_name (name),
    UNIQUE INDEX i_path (path(255))   -- Index prefix length of 255 is the max prior to MySQL 4.1.2.  Should be good enough.
@@ -91,9 +92,9 @@ create table volume_blobs (
   revision INTEGER NOT NULL,
   blob_digest VARCHAR(44),
   processed BOOLEAN default false,
-  
+
   INDEX i_blob_digest (blob_digest),
-  
+
   CONSTRAINT uc_blobinfo UNIQUE (volume_id,mailbox_id,item_id,revision)
   -- FK constraints disabled for now; maybe enable them in 9.0 when we have time to deal with delete cases
   -- CONSTRAINT fk_volume_blobs_volume_id FOREIGN KEY (volume_id) REFERENCES volume(id),
@@ -268,7 +269,7 @@ CREATE TABLE current_sessions (
 	id				INTEGER UNSIGNED NOT NULL,
 	server_id		VARCHAR(127) NOT NULL,
 	PRIMARY KEY (id, server_id)
-) ENGINE = InnoDB; 
+) ENGINE = InnoDB;
 
 -- ZMG Devices
 CREATE TABLE zmg_devices (
