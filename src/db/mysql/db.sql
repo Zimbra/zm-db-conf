@@ -51,7 +51,7 @@ CREATE TABLE volume (
    compression_threshold  BIGINT NOT NULL,
    metadata               MEDIUMTEXT,
    store_type             TINYINT(1) NOT NULL DEFAULT 1, -- 1 for INTERNAL(onstore) and 2 for EXTERNAL(s3 bucket, OPENIO)
-   store_manager_class    VARCHAR(255) DEFAULT NULL,
+   store_manager_class    VARCHAR(255) DEFAULT 'com.zimbra.cs.store.file.FileBlobStore',
 
    UNIQUE INDEX i_name (name),
    UNIQUE INDEX i_path (path(255))   -- Index prefix length of 255 is the max prior to MySQL 4.1.2.  Should be good enough.
