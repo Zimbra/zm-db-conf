@@ -63,7 +63,7 @@ VOLUME_ADD_COLUMN_EOF
 # Function to add 'store_manager_class' column
 sub addStoreManagerClassColumn() {
     my $sql = <<VOLUME_ADD_COLUMN_EOF;
-ALTER TABLE volume ADD COLUMN IF NOT EXISTS store_manager_class VARCHAR(255) DEFAULT NULL;
+ALTER TABLE volume ADD COLUMN IF NOT EXISTS store_manager_class VARCHAR(255) DEFAULT 'com.zimbra.cs.store.file.FileBlobStore';
 VOLUME_ADD_COLUMN_EOF
 
     Migrate::log("Adding store_manager_class column to zimbra.volume table.");
