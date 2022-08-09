@@ -245,6 +245,7 @@ CREATE TABLE mobile_devices (
    approved_appl_list   TEXT NULL,
    mobile_operator      VARCHAR(512),
    last_updated_by     ENUM('Admin','User') DEFAULT 'Admin',
+   update_time         TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
    
    PRIMARY KEY (mailbox_id, device_id),
    CONSTRAINT fk_mobile_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
