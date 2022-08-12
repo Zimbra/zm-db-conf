@@ -46,7 +46,7 @@ updateStoreTypeColumn();
 addStoreManagerClassColumn();
 
 # Update Schema Version Number
-Migrate::updateSchemaVersion(114, 115);
+Migrate::updateSchemaVersion(115, 116);
 
 exit(0);
 
