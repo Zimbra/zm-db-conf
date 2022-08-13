@@ -39,14 +39,14 @@ if ($^O !~ /MSWin/i) {
 }
 
 # Verify Schema Version Number
-Migrate::verifySchemaVersion(114);
+Migrate::verifySchemaVersion(115);
 
 addStoreTypeColumn();
 updateStoreTypeColumn();
 addStoreManagerClassColumn();
 
 # Update Schema Version Number
-Migrate::updateSchemaVersion(114, 115);
+Migrate::updateSchemaVersion(115, 116);
 
 exit(0);
 
