@@ -20,42 +20,47 @@
 #
 # Add Files Shared With me system folder (id = 20) to each mailbox.
 #
-
 use strict;
 use Migrate;
 
-sub bumpUpMailboxChangeCheckpoints();
+# Verify Schema Version Number
+Migrate::verifySchemaVersion(116);
 
-my $CONCURRENCY = 10;
-my $ID = 20;
-my $METADATA = 'd1:ai1e3:das5:false4:mseqi1e4:unxti21e1:vi10e2:vti8ee';
-my $NOW = time();
-my $FOLDERNAME = 'Files shared with me';
+checkAndCreateFilesSharedWithMeFolder();
 
-bumpUpMailboxChangeCheckpoints();
-
-my @sqlRename;
-my %mailboxes = Migrate::getMailboxes();
-
-my %uniqueGroups;
-foreach my $gid (values %mailboxes) {
-    if (!exists($uniqueGroups{$gid})) {
-        $uniqueGroups{$gid} = $gid;
-    }
-}
-my @sqlInsert;
-my @groups = sort(keys %uniqueGroups);
-foreach my $gid (sort @groups) {
-    my $sql = createFolder($gid);
-    push(@sqlInsert, $sql);
-}
-Migrate::runSqlParallel($CONCURRENCY, @sqlInsert);
+# Update Schema Version Number
+Migrate::updateSchemaVersion(116, 117);
 
 exit(0);
 
-
 #####################
 
+sub checkAndCreateFilesSharedWithMeFolder() {
+    my $CONCURRENCY = 10;
+    my $FOLDERID = 20;
+    my $METADATA = 'd1:ai1e3:das5:false4:mseqi1e4:unxti21e1:vi10e2:vti8ee';
+    my $NOW = time();
+    my $FOLDERNAME = 'Files shared with me';
+
+    bumpUpMailboxChangeCheckpoints();
+
+    my %mailboxes = Migrate::getMailboxes();
+    my %uniqueGroups;
+    foreach my $gid (values %mailboxes) {
+        if (!exists($uniqueGroups{$gid})) {
+            $uniqueGroups{$gid} = $gid;
+        }
+    }
+
+    my @sqlInsert;
+    my @groups = sort(keys %uniqueGroups);
+    foreach my $gid (sort @groups) {
+        my $sql = createFolder($gid, $FOLDERID, $METADATA, $NOW, $FOLDERNAME);
+        push(@sqlInsert, $sql);
+    }
+
+    Migrate::runSqlParallel($CONCURRENCY, @sqlInsert);
+}
 
 # Increment change_checkpoint column for all rows in mailbox table.
 # This SQL must be executed immediately rather than queued.
@@ -69,8 +74,8 @@ _SQL_
 
 # Create the system Files shared with me folder for each mailbox in the specified
 # mailbox group.
-sub createFolder($) {
-    my $gid = shift;
+sub createFolder($$$$$) {
+    my ($gid, $folderid, $metadata, $now, $foldername) = @_;
 
     my $sql = <<_SQL_;
 INSERT INTO mboxgroup$gid.mail_item (
@@ -81,14 +86,14 @@ INSERT INTO mboxgroup$gid.mail_item (
     mod_metadata, change_date, mod_content
 )
 SELECT
-    id, $ID, 1, 1, 1, null, null,
-    $NOW, 0, null,
+    id, $folderid, 1, 1, 1, null, null,
+    $now, 0, null,
     0, 0, 0, null,
-    '$FOLDERNAME', '$FOLDERNAME', '$METADATA',
-    change_checkpoint, $NOW, change_checkpoint
+    '$foldername', '$foldername', '$metadata',
+    change_checkpoint, $now, change_checkpoint
 FROM mailbox
 WHERE group_id = $gid
-ON DUPLICATE KEY UPDATE name = '$FOLDERNAME';
+ON DUPLICATE KEY UPDATE name = '$foldername';
 _SQL_
     return $sql;
 }
