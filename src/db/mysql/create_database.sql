@@ -302,3 +302,25 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.purged_messages (
    PRIMARY KEY (mailbox_id, data_source_id, item_id),
    CONSTRAINT fk_purged_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.event (
+   mailbox_id    INTEGER UNSIGNED NOT NULL,
+   account_id    VARCHAR(36) NOT NULL,  -- user performing the action (email address or guid)
+   item_id       INTEGER NOT NULL,  -- itemId for the event
+   folder_id     INTEGER NOT NULL,  -- folderId for the item in the event
+   op            TINYINT NOT NULL,  -- operation
+   ts            INTEGER NOT NULL,  -- timestamp
+   version       INTEGER,           -- version of the item
+   user_agent    VARCHAR(128),      -- identifier of device if available
+   arg           VARCHAR(10240),    -- operation specific argument
+
+   CONSTRAINT fk_event_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.watch (
+   mailbox_id   INTEGER UNSIGNED NOT NULL,
+   target       VARCHAR(36) NOT NULL,  -- watch target account id
+   item_id      INTEGER NOT NULL,  -- target item id
+
+   PRIMARY KEY (mailbox_id, target, item_id)
+) ENGINE = InnoDB;
