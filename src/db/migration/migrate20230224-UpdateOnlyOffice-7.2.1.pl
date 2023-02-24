@@ -20,8 +20,11 @@ use Migrate;
 # Verify Schema Version Number
 Migrate::verifySchemaVersion(117);
 
-addTenantColumnToDocChanges();
-addMultiColumnToTaskResult();
+my $result = Migrate::runSql("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'onlyoffice';", 0);
+if ($result == 1) {
+   addTenantColumnToDocChanges();
+   addMultiColumnToTaskResult();
+}
 
 # Update Schema Version Number
 Migrate::updateSchemaVersion(117, 118);
