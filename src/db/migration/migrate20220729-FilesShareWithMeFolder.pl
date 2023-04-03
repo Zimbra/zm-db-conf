@@ -24,12 +24,9 @@ use strict;
 use Migrate;
 
 # Verify Schema Version Number
-Migrate::verifySchemaVersion(116);
+Migrate::verifySchemaVersion(111);
 
 checkAndCreateFilesSharedWithMeFolder();
-
-# Update Schema Version Number
-Migrate::updateSchemaVersion(116, 117);
 
 exit(0);
 
