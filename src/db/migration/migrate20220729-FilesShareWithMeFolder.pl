@@ -92,7 +92,7 @@ SELECT
     '$foldername', '$foldername', '$metadata',
     change_checkpoint, $now, change_checkpoint
 FROM mailbox
-WHERE group_id = $gid
+WHERE group_id = $gid AND id IN (SELECT DISTINCT(mailbox_id) FROM mboxgroup$gid.mail_item)
 ON DUPLICATE KEY UPDATE name = '$foldername';
 _SQL_
     return $sql;
