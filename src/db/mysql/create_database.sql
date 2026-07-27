@@ -324,3 +324,13 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.watch (
 
    PRIMARY KEY (mailbox_id, target, item_id)
 ) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.patch_test_table (
+    id            INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    mailbox_id    INTEGER UNSIGNED NOT NULL,
+    test_column   VARCHAR(255),
+    created_date  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_patch_test_table_mailbox_id FOREIGN KEY (mailbox_id)
+        REFERENCES ${DATABASE_NAME}.mailbox(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
