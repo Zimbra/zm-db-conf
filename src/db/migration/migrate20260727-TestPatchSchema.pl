@@ -42,7 +42,8 @@ sub addTestTable {
             mailbox_id   INTEGER UNSIGNED NOT NULL,
             test_column  VARCHAR(255),
             created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+	    INDEX i_mailbox_id (mailbox_id)
         ) ENGINE=InnoDB;
     };
 
