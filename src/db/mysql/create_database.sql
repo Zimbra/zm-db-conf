@@ -331,6 +331,5 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.patch_test_table (
     test_column   VARCHAR(255),
     created_date  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    CONSTRAINT fk_patch_test_table_mailbox_id FOREIGN KEY (mailbox_id)
-        REFERENCES ${DATABASE_NAME}.mailbox(id) ON DELETE CASCADE
+    INDEX i_mailbox_id (mailbox_id)
 ) ENGINE=InnoDB;
