@@ -57,7 +57,8 @@ CREATE TABLE IF NOT EXISTS  $group.ropc_token_store (
     UNIQUE KEY `uk_user_device_session` (`username`, `provider`, `protocol`, `device_id`, `user_agent`),
     INDEX `idx_options_ip_lookup` (`username`, `provider`, `protocol`, `ip`, `user_agent`),
     INDEX `idx_expiry_cleanup` (`created_at`),
-    INDEX `idx_back_channel_logout` (`username`)
+    INDEX `idx_back_channel_logout` (`username`),
+    INDEX `idx_device_lookup` (`device_id`, `username`)
 ) ENGINE=InnoDB;
 __EOF__
 
