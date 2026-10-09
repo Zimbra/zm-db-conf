@@ -39,6 +39,7 @@ my $start = time();
 my @create_ropc = ();
 
 foreach my $group (@groups) {
+    print "Preparing to add ropc_token_store to $group...\n";
     my $query = <<"__EOF__";
 CREATE TABLE IF NOT EXISTS $group.ropc_token_store (
     id            BIGINT AUTO_INCREMENT NOT NULL,
