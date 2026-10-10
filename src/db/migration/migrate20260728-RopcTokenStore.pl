@@ -55,13 +55,14 @@ CREATE TABLE IF NOT EXISTS $group.ropc_token_store (
     updated_at    BIGINT NOT NULL,
 
     PRIMARY KEY (id),
-    UNIQUE KEY uk_user_device_session (username, provider, protocol, device_id, user_agent, factor),
-    INDEX idx_domain_lookup         (domain_name),
-    INDEX idx_options_ip_lookup     (username, provider, protocol, ip, user_agent, factor),
-    INDEX idx_expiry_cleanup        (created_at),
-    INDEX idx_back_channel_logout   (username),
-    INDEX idx_device_lookup         (device_id, username),
-    INDEX idx_latest_session_lookup (username, created_at)
+    UNIQUE KEY `uk_user_device_session` (`username`, `provider`, `protocol`, `device_id`, `user_agent`, `factor`),
+    INDEX `idx_domain_lookup` (`domain_name`),
+    INDEX `idx_domain_created_lookup` (`domain_name`, `created_at`),
+    INDEX `idx_options_ip_lookup` (`username`, `provider`, `protocol`, `ip`, `user_agent`, `factor`),
+    INDEX `idx_expiry_cleanup` (`created_at`),
+    INDEX `idx_back_channel_logout` (`username`),
+    INDEX `idx_device_lookup` (`device_id`, `username`),
+    INDEX `idx_latest_session_lookup` (`username`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 __EOF__
 
@@ -99,9 +100,9 @@ CREATE TABLE IF NOT EXISTS $group.cred_store (
     updated_at                  BIGINT NOT NULL,
 
     PRIMARY KEY (id),
-    UNIQUE KEY uk_cred_ropc_instance (ropc_token_id, client_instance_id),
-    UNIQUE KEY uk_cred_zmg (reg_id),
-    UNIQUE KEY uk_cred_rt_hash (refresh_token_hash),
+    UNIQUE KEY `uk_cred_ropc_instance` (`ropc_token_id`, `client_instance_id`),
+    UNIQUE KEY `uk_cred_zmg` (`reg_id`),
+    UNIQUE KEY `uk_cred_rt_hash` (`refresh_token_hash`),
 
     CONSTRAINT fk_cred_ropc FOREIGN KEY (ropc_token_id)
         REFERENCES $group.ropc_token_store (id) ON DELETE CASCADE,
@@ -112,12 +113,13 @@ CREATE TABLE IF NOT EXISTS $group.cred_store (
     CONSTRAINT fk_cred_mailbox FOREIGN KEY (mailbox_id)
         REFERENCES zimbra.mailbox (id) ON DELETE CASCADE,
 
-    INDEX i_cred_ropc_lookup     (ropc_token_id),
-    INDEX i_cred_zmg_mailbox     (mailbox_id, revoked_at),
-    INDEX i_cred_expiry_cleanup  (refresh_token_expires_at),
-    INDEX i_cred_revocation      (owner_type, revoked_at),
-    INDEX i_cred_idp             (auth_provider, idp_id),
-    INDEX i_cred_id_token_lookup (id_token(191))
+    INDEX `i_cred_ropc_lookup`     (`ropc_token_id`),
+    INDEX `i_cred_zmg_mailbox`     (`mailbox_id`, `revoked_at`),
+    INDEX `i_cred_expiry_cleanup`  (`refresh_token_expires_at`),
+    INDEX `i_cred_revocation`      (`owner_type`, `revoked_at`),
+    INDEX `i_cred_idp`             (`auth_provider`, `idp_id`),
+    INDEX `i_cred_id_token_lookup` (`id_token`(255)),
+    INDEX `i_cred_owner_created`   (`owner_type`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 __EOF__
 
