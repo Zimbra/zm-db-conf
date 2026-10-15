@@ -376,7 +376,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.cred_store (
 
    PRIMARY KEY (id),
 
-   UNIQUE KEY `uk_cred_ropc_instance` (`ropc_token_id`, `client_instance_id`),
+   UNIQUE KEY `uk_cred_mailbox_client_instance` (`mailbox_id`, `client_instance_id`),
    UNIQUE KEY `uk_cred_zmg` (`reg_id`),
    UNIQUE KEY `uk_cred_rt_hash` (`refresh_token_hash`),
 
