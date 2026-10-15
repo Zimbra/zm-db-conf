@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS $group.ropc_token_store (
     INDEX `idx_back_channel_logout` (`username`),
     INDEX `idx_device_lookup` (`device_id`, `username`),
     INDEX `idx_latest_session_lookup` (`username`, `created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 __EOF__
 
     push(@create_ropc, $query);
@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS $group.cred_store (
     id                          BIGINT AUTO_INCREMENT NOT NULL,
     owner_type                  VARCHAR(16) NOT NULL,
     ropc_token_id               BIGINT DEFAULT NULL,
+    client_instance_id          VARCHAR(64) DEFAULT NULL,
     client_label                VARCHAR(128) DEFAULT NULL,
     reg_id                      VARCHAR(255) CHARACTER SET utf8 DEFAULT NULL,
     app_id                      VARCHAR(64)  CHARACTER SET utf8 DEFAULT NULL,
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS $group.cred_store (
     updated_at                  BIGINT NOT NULL,
 
     PRIMARY KEY (id),
+    UNIQUE KEY `uk_cred_ropc_instance` (`ropc_token_id`, `client_instance_id`),
     UNIQUE KEY `uk_cred_zmg` (`reg_id`),
     UNIQUE KEY `uk_cred_rt_hash` (`refresh_token_hash`),
 
