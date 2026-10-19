@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.ropc_token_store (
     INDEX `idx_back_channel_logout` (`username`),
     INDEX `idx_device_lookup` (`device_id`, `username`),
     INDEX `idx_latest_session_lookup` (`username`, `created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.cred_store (
    id                          BIGINT AUTO_INCREMENT NOT NULL,
@@ -355,13 +355,11 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.cred_store (
    ropc_token_id               BIGINT DEFAULT NULL,
    client_instance_id          VARCHAR(64) DEFAULT NULL,
    client_label                VARCHAR(128) DEFAULT NULL,
-   reg_id                      VARCHAR(255) CHARACTER SET utf8 DEFAULT NULL,
-   app_id                      VARCHAR(64)  CHARACTER SET utf8 DEFAULT NULL,
    mailbox_id                  INTEGER UNSIGNED DEFAULT NULL,
    password_hash               VARCHAR(255) DEFAULT NULL,
    totp_hash                   VARCHAR(255) DEFAULT NULL,
    auth_provider               VARCHAR(16) NOT NULL DEFAULT 'ZIMBRA',   -- ZIMBRA | IDP
-   idp_id                      VARCHAR(255) DEFAULT NULL,
+   idp_id                      VARCHAR(128) DEFAULT NULL,
    refresh_token_hash          BINARY(32) DEFAULT NULL,
    refresh_token_enc           VARBINARY(2048) DEFAULT NULL,
    refresh_token_key_version   SMALLINT UNSIGNED DEFAULT NULL,
@@ -377,14 +375,10 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.cred_store (
    PRIMARY KEY (id),
 
    UNIQUE KEY `uk_cred_mailbox_client_instance` (`mailbox_id`, `client_instance_id`),
-   UNIQUE KEY `uk_cred_zmg` (`reg_id`),
    UNIQUE KEY `uk_cred_rt_hash` (`refresh_token_hash`),
 
    CONSTRAINT fk_cred_ropc FOREIGN KEY (ropc_token_id)
        REFERENCES ${DATABASE_NAME}.ropc_token_store (id) ON DELETE CASCADE,
-
-   CONSTRAINT fk_cred_zmg FOREIGN KEY (reg_id)
-       REFERENCES zimbra.zmg_devices (reg_id) ON DELETE SET NULL,
 
    CONSTRAINT fk_cred_mailbox FOREIGN KEY (mailbox_id)
        REFERENCES zimbra.mailbox (id) ON DELETE CASCADE,
