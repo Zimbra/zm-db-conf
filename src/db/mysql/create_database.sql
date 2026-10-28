@@ -324,3 +324,70 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.watch (
 
    PRIMARY KEY (mailbox_id, target, item_id)
 ) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.ropc_token_store (
+    id            BIGINT AUTO_INCREMENT NOT NULL,
+    username      VARCHAR(255) NOT NULL,
+    domain_name   VARCHAR(255) DEFAULT NULL,
+    device_id     VARCHAR(128) DEFAULT NULL,
+    user_agent    VARCHAR(255) DEFAULT NULL,
+    ip            VARCHAR(45)  DEFAULT NULL,
+    provider      VARCHAR(32)  NOT NULL,
+    factor        VARCHAR(32)  NOT NULL,
+    protocol      VARCHAR(32)  NOT NULL,
+    created_at    BIGINT NOT NULL,
+    updated_at    BIGINT NOT NULL,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY `uk_user_device_session` (`username`, `provider`, `protocol`, `device_id`, `user_agent`, `factor`),
+    INDEX `idx_domain_lookup` (`domain_name`),
+    INDEX `idx_domain_created_lookup` (`domain_name`, `created_at`),
+    INDEX `idx_options_ip_lookup` (`username`, `provider`, `protocol`, `ip`, `user_agent`, `factor`),
+    INDEX `idx_expiry_cleanup` (`created_at`),
+    INDEX `idx_back_channel_logout` (`username`),
+    INDEX `idx_device_lookup` (`device_id`, `username`),
+    INDEX `idx_latest_session_lookup` (`username`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.cred_store (
+   id                          BIGINT AUTO_INCREMENT NOT NULL,
+   owner_type                  VARCHAR(16) NOT NULL,
+   ropc_token_id               BIGINT DEFAULT NULL,
+   client_instance_id          VARCHAR(64) DEFAULT NULL,
+   client_label                VARCHAR(128) DEFAULT NULL,
+   mailbox_id                  INTEGER UNSIGNED DEFAULT NULL,
+   password_hash               VARCHAR(255) DEFAULT NULL,
+   totp_hash                   VARCHAR(255) DEFAULT NULL,
+   auth_provider               VARCHAR(16) NOT NULL DEFAULT 'ZIMBRA',   -- ZIMBRA | IDP
+   idp_id                      VARCHAR(128) DEFAULT NULL,
+   refresh_token_hash          BINARY(32) DEFAULT NULL,
+   refresh_token_enc           VARBINARY(2048) DEFAULT NULL,
+   refresh_token_key_version   SMALLINT UNSIGNED DEFAULT NULL,
+   refresh_token_issued_at     BIGINT DEFAULT NULL,
+   refresh_token_expires_at    BIGINT DEFAULT NULL,
+   refresh_token_last_used_at  BIGINT DEFAULT NULL,
+   refresh_token_version       INTEGER UNSIGNED NOT NULL DEFAULT 0,
+   id_token                    TEXT DEFAULT NULL,
+   revoked_at                  BIGINT DEFAULT NULL,
+   created_at                  BIGINT NOT NULL,
+   updated_at                  BIGINT NOT NULL,
+
+   PRIMARY KEY (id),
+
+   UNIQUE KEY `uk_cred_mailbox_client_instance` (`mailbox_id`, `client_instance_id`),
+   UNIQUE KEY `uk_cred_rt_hash` (`refresh_token_hash`),
+
+   CONSTRAINT fk_cred_ropc FOREIGN KEY (ropc_token_id)
+       REFERENCES ${DATABASE_NAME}.ropc_token_store (id) ON DELETE CASCADE,
+
+   CONSTRAINT fk_cred_mailbox FOREIGN KEY (mailbox_id)
+       REFERENCES zimbra.mailbox (id) ON DELETE CASCADE,
+
+   INDEX `i_cred_ropc_lookup`     (`ropc_token_id`),
+   INDEX `i_cred_zmg_mailbox`     (`mailbox_id`, `revoked_at`),
+   INDEX `i_cred_expiry_cleanup`  (`refresh_token_expires_at`),
+   INDEX `i_cred_revocation`      (`owner_type`, `revoked_at`),
+   INDEX `i_cred_idp`             (`auth_provider`, `idp_id`),
+   INDEX `i_cred_id_token_lookup` (`id_token`(255)),
+   INDEX `i_cred_owner_created`   (`owner_type`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
