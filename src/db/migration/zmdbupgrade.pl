@@ -9,7 +9,7 @@ use zmupgrade;
 my $platform = qx(/opt/zimbra/libexec/get_plat_tag.sh);
 chomp $platform;
 my $su = "su - zimbra -c";
-my $hiVersion = 118;
+my $hiVersion = 120;
 
 sub progress {
 	my $msg = shift;
