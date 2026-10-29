@@ -273,19 +273,29 @@ CREATE TABLE current_sessions (
 
 -- ZMG Devices
 CREATE TABLE zmg_devices (
-   mailbox_id          INTEGER UNSIGNED NOT NULL,
-   app_id              VARCHAR(64) NOT NULL,
-   reg_id              VARCHAR(255) NOT NULL,
-   push_provider       VARCHAR(8) NOT NULL,
-   os_name             VARCHAR(16),
-   os_version          VARCHAR(8),
-   max_payload_size    INTEGER UNSIGNED,
+   id                 BIGINT NOT NULL AUTO_INCREMENT,      -- surrogate key, reserved for a future credential store
+   mailbox_id         INTEGER UNSIGNED NOT NULL,
+   device_id          VARCHAR(64)   CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+   device_type        VARCHAR(16)   NOT NULL DEFAULT 'MOBILE',  -- MOBILE | DESKTOP
+   app_id             VARCHAR(64)   NOT NULL,                   -- bundle/package id
+   app_version        VARCHAR(32),
+   os_name            VARCHAR(16)   NOT NULL DEFAULT 'UNKNOWN',
+   os_version         VARCHAR(32),
+   push_provider      VARCHAR(16)   NOT NULL DEFAULT 'FCM',
+   reg_id             VARCHAR(1024) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+   reg_id_hash        BINARY(32)    NOT NULL,                   -- SHA-256(reg_id)
+   reg_id_updated_at  INTEGER UNSIGNED NOT NULL,
+   created_at         INTEGER UNSIGNED NOT NULL,
+   updated_at         INTEGER UNSIGNED NOT NULL,
+   last_seen_at       INTEGER UNSIGNED,
 
-   PRIMARY KEY (mailbox_id, app_id),
-   CONSTRAINT uk_zmg_reg_id UNIQUE KEY (reg_id),
+   PRIMARY KEY (mailbox_id, device_id),
+   UNIQUE KEY uk_zmg_id (id),
+   UNIQUE KEY uk_zmg_mbox_reg_id (mailbox_id, reg_id_hash),
    CONSTRAINT fk_zmg_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE,
-   INDEX i_mailbox_id (mailbox_id),
-   INDEX i_reg_id (reg_id)
+   INDEX i_zmg_device_id (device_id),
+   INDEX i_zmg_reg_id_hash (reg_id_hash),
+   INDEX i_zmg_last_seen_at (last_seen_at)
 ) ENGINE = InnoDB;
 
 -- Support for Zimbra Chat
