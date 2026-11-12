@@ -55,7 +55,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item (
 
    UNIQUE INDEX i_name_folder_id (mailbox_id, folder_id, name),   -- for namespace uniqueness
 
-   CONSTRAINT fk_mail_item_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_mail_item_parent_id FOREIGN KEY (mailbox_id, parent_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id),
    CONSTRAINT fk_mail_item_folder_id FOREIGN KEY (mailbox_id, folder_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id)
 ) ENGINE = NDBCLUSTER;
@@ -94,11 +93,9 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.mail_item_dumpster (
    INDEX i_index_id (mailbox_id, index_id),  -- for looking up based on search results
    INDEX i_date (mailbox_id, date),          -- fallback index in case other constraints are not specified
    INDEX i_mod_metadata (mailbox_id, mod_metadata),      -- used by the sync code
-   INDEX i_uuid (mailbox_id, uuid),          -- for looking up by uuid 
+   INDEX i_uuid (mailbox_id, uuid)          -- for looking up by uuid 
 
    -- Must not enforce unique index on (mailbox_id, folder_id, name) for the dumpster version!
-
-   CONSTRAINT fk_mail_item_dumpster_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
 ) ENGINE = NDBCLUSTER;
 
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision (
@@ -117,7 +114,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision (
 
    PRIMARY KEY (mailbox_id, item_id, version),
 
-   CONSTRAINT fk_revision_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_revision_item_id FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
 
@@ -137,7 +133,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.revision_dumpster (
 
    PRIMARY KEY (mailbox_id, item_id, version),
 
-   CONSTRAINT fk_revision_dumpster_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_revision_dumpster_item_id FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item_dumpster(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
 
@@ -153,8 +148,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tag (
    policy        VARCHAR(1024),
 
    PRIMARY KEY (mailbox_id, id),
-   UNIQUE INDEX i_tag_name (mailbox_id, name),
-   CONSTRAINT fk_tag_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
+   UNIQUE INDEX i_tag_name (mailbox_id, name)
 ) ENGINE = NDBCLUSTER;
 
 CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tagged_item (
@@ -174,7 +168,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.open_conversation (
 
    PRIMARY KEY (mailbox_id, hash),
    INDEX i_conv_id (mailbox_id, conv_id),
-   CONSTRAINT fk_open_conversation_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_open_conversation_conv_id FOREIGN KEY (mailbox_id, conv_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
 
@@ -186,7 +179,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.appointment (
    end_time    DATETIME,
 
    PRIMARY KEY (mailbox_id, uid),
-   CONSTRAINT fk_appointment_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_appointment_item_id FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
 
@@ -200,7 +192,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.appointment_dumpster (
    end_time    DATETIME,
 
    PRIMARY KEY (mailbox_id, uid),
-   CONSTRAINT fk_appointment_dumpster_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id),
    CONSTRAINT fk_appointment_dumpster_item_id FOREIGN KEY (mailbox_id, item_id) REFERENCES ${DATABASE_NAME}.mail_item_dumpster(mailbox_id, id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
 
@@ -213,8 +204,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.tombstone (
    type        TINYINT,                    -- 1 = folder, 3 = tag, etc.
    ids         TEXT,
 
-   INDEX i_sequence (mailbox_id, sequence),
-   CONSTRAINT fk_tombstone_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
+   INDEX i_sequence (mailbox_id, sequence)
 ) ENGINE = NDBCLUSTER;
 
 -- Tracks UID's of messages on remote POP3 servers
@@ -224,8 +214,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.pop3_message (
    uid            VARCHAR(255) BINARY NOT NULL,
    item_id        INTEGER UNSIGNED NOT NULL,
 
-   PRIMARY KEY (mailbox_id, item_id),
-   CONSTRAINT fk_pop3_message_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id)
+   PRIMARY KEY (mailbox_id, item_id)
 ) ENGINE = NDBCLUSTER;
 
 CREATE UNIQUE INDEX i_uid_pop3_id ON ${DATABASE_NAME}.pop3_message (uid, data_source_id);
@@ -239,8 +228,7 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.imap_folder (
    remote_path        VARCHAR(1000) NOT NULL,
    uid_validity       INTEGER UNSIGNED,
 
-   PRIMARY KEY (mailbox_id, item_id),
-   CONSTRAINT fk_imap_folder_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+   PRIMARY KEY (mailbox_id, item_id)
 ) ENGINE = NDBCLUSTER;
 
 -- CREATE UNIQUE INDEX i_local_path
@@ -258,8 +246,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.imap_message (
    flags          INTEGER NOT NULL DEFAULT 0,
 
    PRIMARY KEY (mailbox_id, item_id),
-   CONSTRAINT fk_imap_message_mailbox_id FOREIGN KEY (mailbox_id)
-      REFERENCES zimbra.mailbox(id) ON DELETE CASCADE,
    CONSTRAINT fk_imap_message_imap_folder_id FOREIGN KEY (mailbox_id, imap_folder_id)
       REFERENCES ${DATABASE_NAME}.imap_folder(mailbox_id, item_id) ON DELETE CASCADE
 ) ENGINE = NDBCLUSTER;
@@ -276,6 +262,5 @@ CREATE TABLE IF NOT EXISTS ${DATABASE_NAME}.data_source_item (
    metadata       MEDIUMTEXT,
 
    PRIMARY KEY (mailbox_id, item_id),
-   UNIQUE INDEX i_remote_id (mailbox_id, data_source_id, remote_id),   -- for reverse lookup
-   CONSTRAINT fk_data_source_item_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES zimbra.mailbox(id) ON DELETE CASCADE
+   UNIQUE INDEX i_remote_id (mailbox_id, data_source_id, remote_id)   -- for reverse lookup
 ) ENGINE = NDBCLUSTER;
